@@ -1,4 +1,4 @@
-from Backend.Interfaces.ISimulacionDominioService import ISimulacionDominioService
+from Backend.Servicios.SimServicios.ISimulacionDominioService import ISimulacionDominioService
 from Backend.Dominio.Simulacion_dominio import Simulacion
 from Backend.Dominio.Dominio_Cliente import Cliente
 from Backend.Dominio.Dominio_Almacenamiento import Almacenamiento

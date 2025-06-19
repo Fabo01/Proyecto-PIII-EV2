@@ -1,10 +1,10 @@
 """
 Estrategia de ruta usando BFS.
 """
-from Backend.Dominio.IRutaStrategy import IRutaStrategy
+from Backend.Servicios.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
 from collections import deque
 
-class RutaStrategyBFS(IRutaStrategy):
+class RutaEstrategiaBFS(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo):
         visitados = set()
         prev = {origen: None}

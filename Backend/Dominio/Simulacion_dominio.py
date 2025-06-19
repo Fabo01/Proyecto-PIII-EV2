@@ -12,10 +12,10 @@ from Backend.Infraestructura.Repositorios.repositorio_recargas import Repositori
 from Backend.Infraestructura.Repositorios.repositorio_vertices import RepositorioVertices
 from Backend.Infraestructura.Repositorios.repositorio_aristas import RepositorioAristas
 from Backend.Infraestructura.Repositorios.repositorio_pedidos import RepositorioPedidos
-from Backend.Dominio.RutaStrategyDijkstra import RutaStrategyDijkstra
-from Backend.Dominio.RutaStrategyBFS import RutaStrategyBFS
-from Backend.Dominio.RutaStrategyDFS import RutaStrategyDFS
-from Backend.Dominio.RutaStrategyFloydWarshall import RutaStrategyFloydWarshall
+from Backend.Servicios.AlgEstrategias.RutaEstrategiaDijkstra import RutaEstrategiaDijkstra
+from Backend.Servicios.AlgEstrategias.RutaEstrategiaBFS import RutaEstrategiaBFS
+from Backend.Servicios.AlgEstrategias.RutaEstrategiaDFS import RutaEstrategiaDFS
+from Backend.Servicios.AlgEstrategias.RutaEstrategiaFloydWarshall import RutaEstrategiaFloydWarshall
 import random
 import time
 import logging
@@ -258,16 +258,16 @@ class Simulacion:
             raise ValueError("El pedido ya fue enviado")
         # Selección de estrategia
         if algoritmo == 'dijkstra':
-            strategy = RutaStrategyDijkstra()
+            Estrategia = RutaEstrategiaDijkstra()
         elif algoritmo == 'bfs':
-            strategy = RutaStrategyBFS()
+            Estrategia = RutaEstrategiaBFS()
         elif algoritmo == 'dfs':
-            strategy = RutaStrategyDFS()
+            Estrategia = RutaEstrategiaDFS()
         elif algoritmo == 'floyd_warshall':
-            strategy = RutaStrategyFloydWarshall()
+            Estrategia = RutaEstrategiaFloydWarshall()
         else:
             raise ValueError("Algoritmo de ruta no soportado")
-        camino, costo = strategy.calcular_ruta(origen, destino, self.grafo)
+        camino, costo = Estrategia.calcular_ruta(origen, destino, self.grafo)
         if not camino:
             raise ValueError("No existe una ruta posible entre los nodos seleccionados.")
         ruta = Ruta(origen, destino, camino, costo, algoritmo)
@@ -366,16 +366,16 @@ class Simulacion:
             raise ValueError("Nodo origen o destino no encontrado")
         # Selección de estrategia
         if algoritmo == 'dijkstra':
-            strategy = RutaStrategyDijkstra()
+            Estrategia = RutaEstrategiaDijkstra()
         elif algoritmo == 'bfs':
-            strategy = RutaStrategyBFS()
+            Estrategia = RutaEstrategiaBFS()
         elif algoritmo == 'dfs':
-            strategy = RutaStrategyDFS()
+            Estrategia = RutaEstrategiaDFS()
         elif algoritmo == 'floyd_warshall':
-            strategy = RutaStrategyFloydWarshall()
+            Estrategia = RutaEstrategiaFloydWarshall()
         else:
             raise ValueError("Algoritmo de ruta no soportado")
-        camino, costo = strategy.calcular_ruta(v_origen, v_destino, grafo)
+        camino, costo = Estrategia.calcular_ruta(v_origen, v_destino, grafo)
         if not camino:
             return None
         camino_ids = [getattr(v.elemento(), 'id', None) or getattr(v.elemento(), 'id_cliente', None) or getattr(v.elemento(), 'id_almacenamiento', None) or getattr(v.elemento(), 'id_recarga', None) for v in camino]

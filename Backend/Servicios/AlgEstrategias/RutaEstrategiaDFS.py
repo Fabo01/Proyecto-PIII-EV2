@@ -1,9 +1,9 @@
 """
 Estrategia de ruta usando DFS.
 """
-from Backend.Dominio.IRutaStrategy import IRutaStrategy
+from Backend.Servicios.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
 
-class RutaStrategyDFS(IRutaStrategy):
+class RutaEstrategiaDFS(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo):
         visitados = set()
         prev = {}

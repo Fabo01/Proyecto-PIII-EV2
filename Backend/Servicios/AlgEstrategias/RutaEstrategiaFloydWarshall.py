@@ -1,9 +1,9 @@
 """
 Estrategia de ruta usando Floyd-Warshall (para todos los pares, pero aquí solo reconstruye una ruta).
 """
-from Backend.Dominio.IRutaStrategy import IRutaStrategy
+from Backend.Servicios.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
 
-class RutaStrategyFloydWarshall(IRutaStrategy):
+class RutaEstrategiaFloydWarshall(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo):
         vertices = list(grafo.vertices())
         n = len(vertices)

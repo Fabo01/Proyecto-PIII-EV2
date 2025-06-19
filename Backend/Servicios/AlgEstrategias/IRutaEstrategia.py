@@ -1,9 +1,9 @@
 """
-Interfaz para estrategias de cálculo de rutas (patrón Strategy).
+Interfaz para estrategias de cálculo de rutas (patrón Estrategia).
 """
 from abc import ABC, abstractmethod
 
-class IRutaStrategy(ABC):
+class IRutaEstrategia(ABC):
     @abstractmethod
     def calcular_ruta(self, origen, destino, grafo):
         """

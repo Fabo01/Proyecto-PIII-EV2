@@ -1,8 +1,8 @@
-from Backend.Interfaces.ISimulacionAplicacionService import ISimulacionAplicacionService
+from Backend.Aplicacion.SimAplicacion.ISimulacionAplicacionService import ISimulacionAplicacionService
 from Backend.Dominio.Simulacion_dominio import Simulacion
 from Backend.API.DTOs.Dtos1 import ClienteResponse, AlmacenamientoResponse, RecargaResponse, PedidoResponse, RutaResponse
 from Backend.API.DTOs.Dtos2 import *
-from Backend.Servicios.Servicios_Simulacion import SimulacionDominioService
+from Backend.Servicios.SimServicios.Servicios_Simulacion import SimulacionDominioService
 from fastapi import HTTPException
 import logging
 

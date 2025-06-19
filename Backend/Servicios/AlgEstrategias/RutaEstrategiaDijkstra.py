@@ -1,10 +1,10 @@
 """
 Estrategia de ruta usando Dijkstra.
 """
-from Backend.Dominio.IRutaStrategy import IRutaStrategy
+from Backend.Servicios.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
 import heapq
 
-class RutaStrategyDijkstra(IRutaStrategy):
+class RutaEstrategiaDijkstra(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo):
         # Implementación básica de Dijkstra sobre el grafo del sistema
         dist = {v: float('inf') for v in grafo.vertices()}

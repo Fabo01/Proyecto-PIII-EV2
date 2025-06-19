@@ -5,7 +5,7 @@ Este documento unifica el plan de auditoría de instanciación única con el pla
 ## 1. Introducción
 
 - Mantener la consistencia de instanciación y referencias únicas para Vértices, Aristas, Pedidos, Rutas y Grafo.
-- Aplicar patrones de diseño (Singleton, Factory, Repository, Strategy, Observer, Dependency Injection, Builder, Mapper).
+- Aplicar patrones de diseño (Singleton, Factory, Repository, Estrategia, Observer, Dependency Injection, Builder, Mapper).
 - Refactorizar la arquitectura para escalabilidad, modularidad y facilidad de pruebas.
 - Garantizar cumplimiento de estándares de código en español, snake_case y PascalCase.
 
@@ -13,7 +13,7 @@ Este documento unifica el plan de auditoría de instanciación única con el pla
 
 1. Auditar e implementar instanciación única de objetos centrales.
 2. Centralizar la creación y gestión de entidades en repositorios y fábricas.
-3. Desacoplar algoritmos de ruta mediante Strategy.
+3. Desacoplar algoritmos de ruta mediante Estrategia.
 4. Introducir inyección de dependencias en servicios y bootstrap.
 5. Separar mapeo dominio→DTO en mapeadores dedicados.
 6. Publicar eventos relevantes (Observer) para UI y estadísticas en tiempo real.
@@ -97,7 +97,7 @@ Este documento unifica el plan de auditoría de instanciación única con el pla
 
 ---
 
-### 4.3 Patrón Strategy para Algoritmos de Ruta
+### 4.3 Patrón Estrategia para Algoritmos de Ruta
 #### 4.3.1 Definir interfaz `IRutaEstrategia`
 - [ ] Método `calcular(origen, destino, max_peso, forzar_recarga)`
 #### 4.3.2 Implementaciones concretas
