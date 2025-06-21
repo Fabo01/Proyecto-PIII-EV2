@@ -9,18 +9,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 
 # --- Importar el router de simulacion ---
-from Backend.API.simulacion_endpoints import router as simulacion_router
+from Backend.API.simulacion_endpoints_enrutador import router as simulacion_router
 
 # --- Importar todos los routers de los módulos API ---
-from Backend.API.rutas import router as rutas_router
-from Backend.API.recargas import router as recargas_router
-from Backend.API.pedidos import router as pedidos_router
-from Backend.API.estadisticas import router as estadisticas_router
-from Backend.API.clientes import router as clientes_router
-from Backend.API.almacenamientos import router as almacenamientos_router
-from Backend.API.rutas_algoritmos import router as rutas_algoritmos_router
-from Backend.API.aristas import router as aristas_router
-from Backend.API.vertices import router as vertices_router
+from Backend.API.rutas_enrutador import router as rutas_router
+from Backend.API.recargas_enrutador import router as recargas_router
+from Backend.API.pedidos_enrutador import router as pedidos_router
+from Backend.API.estadisticas_enrutador import router as estadisticas_router
+from Backend.API.clientes_enrutador import router as clientes_router
+from Backend.API.almacenamientos_enrutador import router as almacenamientos_router
+from Backend.API.rutas_algoritmos_enrutador import router as rutas_algoritmos_router
+from Backend.API.aristas_enrutador import router as aristas_router
+from Backend.API.vertices_enrutador import router as vertices_router
 
 app = FastAPI()
 

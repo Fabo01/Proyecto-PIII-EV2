@@ -7,7 +7,7 @@ from Backend.Dominio.Dominio_Ruta import Ruta
 from Backend.Servicios.EntFabricas.FabricaVertices import FabricaVertices
 from Backend.Servicios.EntFabricas.FabricaAristas import FabricaAristas
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaRutas(FabricaInterfaz):
     _instancia = None

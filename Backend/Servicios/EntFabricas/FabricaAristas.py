@@ -2,10 +2,10 @@
 FabricaAristas: Fábrica centralizada para la creación y validación de aristas.
 Garantiza unicidad y registro de errores.
 """
-from Backend.Infraestructura.Modelos.Modelo_Arista import Arista
+from Backend.Infraestructura.Modelos.Dominio_Arista import Arista
 from Backend.Infraestructura.Repositorios.repositorio_aristas import RepositorioAristas
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaAristas(FabricaInterfaz):
     _instancia = None

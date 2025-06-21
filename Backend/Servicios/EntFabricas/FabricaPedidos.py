@@ -6,7 +6,7 @@ from Backend.Dominio.Dominio_Pedido import Pedido
 from datetime import datetime
 import logging
 from Backend.Infraestructura.Repositorios.repositorio_pedidos import RepositorioPedidos
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaPedidos(FabricaInterfaz):
     _instancia = None

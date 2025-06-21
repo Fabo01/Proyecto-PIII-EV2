@@ -5,7 +5,7 @@ Garantiza unicidad y registro de errores.
 from Backend.Dominio.Dominio_Cliente import Cliente
 from Backend.Infraestructura.Repositorios.repositorio_clientes import RepositorioClientes
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaClientes(FabricaInterfaz):
     _instancia = None

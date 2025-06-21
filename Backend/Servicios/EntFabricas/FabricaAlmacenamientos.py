@@ -5,7 +5,7 @@ Garantiza unicidad y registro de errores.
 from Backend.Dominio.Dominio_Almacenamiento import Almacenamiento
 from Backend.Infraestructura.Repositorios.repositorio_almacenamientos import RepositorioAlmacenamientos
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaAlmacenamientos(FabricaInterfaz):
     _instancia = None

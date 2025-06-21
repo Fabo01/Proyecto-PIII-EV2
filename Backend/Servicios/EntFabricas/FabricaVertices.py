@@ -2,10 +2,10 @@
 FabricaVertices: Fábrica centralizada para la creación y validación de vértices.
 Garantiza unicidad y registro de errores.
 """
-from Backend.Infraestructura.Modelos.Modelo_Vertice import Vertice
+from Backend.Infraestructura.Modelos.Dominio_Vertice import Vertice
 from Backend.Infraestructura.Repositorios.repositorio_vertices import RepositorioVertices
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaVertices(FabricaInterfaz):
     _instancia = None

@@ -5,7 +5,7 @@ Garantiza unicidad y registro de errores.
 from Backend.Dominio.Dominio_Recarga import Recarga
 from Backend.Infraestructura.Repositorios.repositorio_recargas import RepositorioRecargas
 import logging
-from Backend.Servicios.EntFabricas.FabInterfaz.FabricaInterfaz import FabricaInterfaz
+from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaRecargas(FabricaInterfaz):
     _instancia = None
