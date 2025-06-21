@@ -15,6 +15,12 @@ def ui_simulacion():
         if m_aristas < n_vertices - 1:
             st.error("El número de aristas debe ser al menos n_vertices - 1 para asegurar conectividad.")
             return
+        # Mostrar los parámetros antes de enviar la petición
+        st.write("Parámetros enviados a la API:", {
+            "n_vertices": n_vertices,
+            "m_aristas": m_aristas,
+            "n_pedidos": n_pedidos
+        })
         resp = api_post("/simulacion/iniciar", {
             "n_vertices": n_vertices,
             "m_aristas": m_aristas,

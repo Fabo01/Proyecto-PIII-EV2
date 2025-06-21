@@ -9,6 +9,7 @@ from Backend.Servicios.Observer.SujetoObservable import SujetoObservable
 from Backend.Servicios.Observer.ObserverEstadisticas import ObserverEstadisticas
 from Backend.Infraestructura.TDA.TDA_AVL import AVL
 import logging
+import random
 
 class Simulacion(SujetoObservable):
     """
@@ -176,31 +177,78 @@ class Simulacion(SujetoObservable):
         for i in range(n_alm):
             alm = fa.crear(f"A{i+1}", f"Almacenamiento {i+1}")
             self.repo_almacenamientos.agregar(alm)
-            self.repo_vertices.agregar(alm)
+            # LOG: Verificar tipo antes de agregar al repositorio de vértices
+            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar almacenamiento al repo_vertices: {alm} (type={type(alm)})")
+            if not hasattr(alm, 'id_almacenamiento'):
+                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_almacenamiento: {alm}")
+            # Si no es Vertice, envolverlo
+            from Backend.Infraestructura.TDA.TDA_Vertice import Vertice
+            if not isinstance(alm, Vertice):
+                vertice_alm = Vertice(alm)
+                logging.debug(f"[AGREGAR_VERTICE] Envolviendo almacenamiento en Vertice: {vertice_alm} (type={type(vertice_alm)})")
+            else:
+                vertice_alm = alm
+            self.repo_vertices.agregar(vertice_alm, getattr(alm, 'id_almacenamiento', None))
+            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
         for i in range(n_rec):
             rec = fr.crear(f"R{i+1}", f"Recarga {i+1}")
             self.repo_recargas.agregar(rec)
-            self.repo_vertices.agregar(rec)
+            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar recarga al repo_vertices: {rec} (type={type(rec)})")
+            if not hasattr(rec, 'id_recarga'):
+                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_recarga: {rec}")
+            if not isinstance(rec, Vertice):
+                vertice_rec = Vertice(rec)
+                logging.debug(f"[AGREGAR_VERTICE] Envolviendo recarga en Vertice: {vertice_rec} (type={type(vertice_rec)})")
+            else:
+                vertice_rec = rec
+            self.repo_vertices.agregar(vertice_rec, getattr(rec, 'id_recarga', None))
+            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
         for i in range(n_cli):
             cli = fc.crear(f"C{i+1}", f"Cliente {i+1}")
             self.repo_clientes.agregar(cli)
-            self.repo_vertices.agregar(cli)
-        # Generar aristas asegurando conectividad y aleatoriedad
+            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar cliente al repo_vertices: {cli} (type={type(cli)})")
+            if not hasattr(cli, 'id_cliente'):
+                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_cliente: {cli}")
+            if not isinstance(cli, Vertice):
+                vertice_cli = Vertice(cli)
+                logging.debug(f"[AGREGAR_VERTICE] Envolviendo cliente en Vertice: {vertice_cli} (type={type(vertice_cli)})")
+            else:
+                vertice_cli = cli
+            self.repo_vertices.agregar(vertice_cli, getattr(cli, 'id_cliente', None))
+            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
+        # Asegurar que all_vertices solo contenga instancias de Vertice únicas del repositorio
         all_vertices = list(self.repo_vertices.todos())
+        logging.info(f"[ALL_VERTICES] Contenido de all_vertices tras poblar: {[str(v) + ' type=' + str(type(v)) for v in all_vertices]}")
+        for idx, v in enumerate(all_vertices):
+            if not (hasattr(v, 'elemento') and callable(getattr(v, 'elemento', None))):
+                import traceback
+                logging.error(f"[ALL_VERTICES] Elemento en all_vertices no es Vertice: idx={idx}, v={v}, type={type(v)}\nStack trace:\n{traceback.format_exc()}")
+                raise TypeError(f"[ALL_VERTICES] Se esperaba Vertice en all_vertices, recibido: idx={idx}, type={type(v)}")
+        logging.info(f"[ALL_VERTICES] Todos los elementos en all_vertices son instancias de Vertice. Total: {len(all_vertices)}")
+        # Generar aristas asegurando conectividad y aleatoriedad
         from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
         fae = FabricaAristas()
         # Conexion en cadena minima
         for u, v in zip(all_vertices, all_vertices[1:]):
-            arista = fae.crear(u, v)
+            logging.debug(f"Creando arista: u={u} (type={type(u)}), v={v} (type={type(v)})")
+            if not (hasattr(u, 'elemento') and hasattr(v, 'elemento')):
+                logging.error(f"[ARISTA-CHAIN] Uno de los objetos no es Vertice: u={u} (type={type(u)}), v={v} (type={type(v)})")
+                raise TypeError(f"[ARISTA-CHAIN] Se esperaba Vertice, recibido: u={type(u)}, v={type(v)}")
+            peso = random.randint(1, 50)
+            arista = fae.crear(u, v, peso)
             self.repo_aristas.agregar(arista)
         # Aristas adicionales hasta m_aristas
         existentes = len(all_vertices) - 1
         posibles = [(u, v) for u in all_vertices for v in all_vertices if u != v]
-        import random
         while existentes < m_aristas and posibles:
             u, v = random.choice(posibles)
+            logging.debug(f"Creando arista extra: u={u} (type={type(u)}), v={v} (type={type(v)})")
+            if not (hasattr(u, 'elemento') and hasattr(v, 'elemento')):
+                logging.error(f"[ARISTA-EXTRA] Uno de los objetos no es Vertice: u={u} (type={type(u)}), v={v} (type={type(v)})")
+                raise TypeError(f"[ARISTA-EXTRA] Se esperaba Vertice, recibido: u={type(u)}, v={type(v)}")
             if not self.repo_aristas.existe(u, v):
-                arista = fae.crear(u, v)
+                peso = random.randint(1, 50)
+                arista = fae.crear(u, v, peso)
                 self.repo_aristas.agregar(arista)
                 existentes += 1
         # Generar pedidos entre almacenamientos y clientes
@@ -210,13 +258,23 @@ class Simulacion(SujetoObservable):
         clientes = list(self.repo_clientes.todos())
         prioridades = ['alta', 'media', 'baja']
         for j in range(1, n_pedidos + 1):
-            import random
-            origen = random.choice(almacenes)
-            destino = random.choice(clientes)
+            almacen = random.choice(almacenes)
+            cliente = random.choice(clientes)
+            # Buscar los vértices correspondientes
+            origen = self.repo_vertices.obtener(getattr(almacen, 'id_almacenamiento', None))
+            destino = self.repo_vertices.obtener(getattr(cliente, 'id_cliente', None))
+            logging.debug(f"Creando pedido: almacen={almacen} (type={type(almacen)}), cliente={cliente} (type={type(cliente)}), origen={origen} (type={type(origen)}), destino={destino} (type={type(destino)})")
+            if not (hasattr(origen, 'elemento') and hasattr(destino, 'elemento')):
+                logging.error(f"[PEDIDO] Origen o destino no es Vertice: origen={origen} (type={type(origen)}), destino={destino} (type={type(destino)})")
+                raise TypeError(f"[PEDIDO] Se esperaba Vertice para origen/destino, recibido: origen={type(origen)}, destino={type(destino)}")
             prioridad = random.choice(prioridades)
-            pedido = fp.crear(f"P{j}", origen, destino, prioridad)
+            pedido = fp.crear(f"P{j}", destino, origen, destino, prioridad)  # cliente_v, origen_v, destino_v, prioridad
             self.repo_pedidos.agregar(pedido)
-            destino.agregar_pedido(pedido)
+            # Agregar el pedido al elemento cliente (no al vértice)
+            if hasattr(destino, 'elemento'):
+                elem_cliente = destino.elemento()
+                if hasattr(elem_cliente, 'agregar_pedido'):
+                    elem_cliente.agregar_pedido(pedido)
         self.notificar_observadores("simulacion_iniciada", {
             "n_vertices": n_vertices,
             "m_aristas": m_aristas,
