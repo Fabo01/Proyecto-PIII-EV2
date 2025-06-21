@@ -1,5 +1,5 @@
 """
-Interfaz Observer para el patrón observer en la simulación logística de drones.
+Interfaz Observer para el patron observer en la simulacion logistica de drones.
 """
 from abc import ABC, abstractmethod
 
@@ -7,7 +7,7 @@ class IObserver(ABC):
     @abstractmethod
     def actualizar(self, evento, datos=None):
         """
-        Método llamado cuando se publica un evento.
+        Metodo llamado cuando se publica un evento.
         :param evento: Nombre del evento.
         :param datos: Datos asociados al evento.
         """

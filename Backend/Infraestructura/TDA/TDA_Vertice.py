@@ -5,64 +5,88 @@ Basado en Docs/vertex.py
 
 class Vertice:
     """
-    Representa un vértice (vertice) en el grafo. Solo almacena el elemento asociado (Cliente, Almacenamiento o Recarga).
-    No contiene lógica de cliente, pedido ni almacenamiento.
+    Representa un vertice en el grafo. Solo almacena el elemento asociado (Cliente, Almacenamiento o Recarga).
+    Notifica a observadores en operaciones CRUD y mapeo.
     """
-    __slots__ = ['_elemento']
+    __slots__ = ['_elemento', '_observadores']
 
     def __init__(self, elemento):
         """
-        Inicializa un vértice con el elemento asociado.
+        Inicializa un vertice con el elemento asociado.
         """
         self._elemento = elemento
+        self._observadores = set()
+        self.notificar_observadores('vertice_creado', {'elemento': elemento})
 
+    @property
     def elemento(self):
         """
-        Retorna el elemento asociado a este vértice.
+        Retorna el elemento asociado a este vertice.
         """
         return self._elemento
 
+    def set_elemento(self, nuevo_elemento):
+        """
+        Actualiza el elemento asociado a este vertice y notifica a los observadores.
+        """
+        self._elemento = nuevo_elemento
+        self.notificar_observadores('vertice_elemento_actualizado', {'elemento': nuevo_elemento})
+
+    def agregar_observador(self, observador):
+        """
+        Agrega un observador para recibir notificaciones de este vertice.
+        """
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        """
+        Quita un observador para dejar de recibir notificaciones de este vertice.
+        """
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        """
+        Notifica a todos los observadores registrados sobre un evento.
+        """
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
+
+    def serializar(self):
+        """
+        Serializa el vertice y notifica a los observadores sobre la serializacion.
+        """
+        self.notificar_observadores('vertice_serializado', {'elemento': self._elemento})
+        return {'elemento': str(self._elemento)}
+
     def __hash__(self):
-        # Usar el id único del elemento para el hash, evitando instancias duplicadas
-        elemento_id = self.id_elemento()
-        return hash((type(self._elemento), elemento_id)) if elemento_id is not None else super().__hash__()
+        return hash(self._elemento)
 
     def __eq__(self, other):
-        """
-        Dos vértices son iguales si son de la misma clase, mismo tipo de elemento y mismo id de elemento.
-        """
-        if not isinstance(other, Vertice):
-            return False
-        id_self = self.id_elemento()
-        id_other = other.id_elemento()
-        return (
-            type(self._elemento) == type(other._elemento)
-            and id_self is not None
-            and id_self == id_other
-        )
+        return isinstance(other, Vertice) and self._elemento == other._elemento
 
     def __str__(self):
         return str(self._elemento)
 
     def __repr__(self):
-        return f"Vertice({self._elemento})"
+        return f"Vertice({repr(self._elemento)})"
 
     def __lt__(self, other):
-        # Ordenar por id de elemento si es posible
-        return self.id_elemento() < other.id_elemento()
+        return str(self._elemento) < str(other._elemento)
 
     def es_tipo(self, tipo):
         """
-        Retorna True si el elemento asociado es del tipo indicado (str).
+        Retorna True si el elemento asociado es del tipo especificado.
         """
-        return hasattr(self._elemento, 'tipo_elemento') and self._elemento.tipo_elemento == tipo
+        return getattr(self._elemento, 'tipo_elemento', None) == tipo
 
     def id_elemento(self):
         """
-        Retorna el id único del elemento asociado (id_cliente, id_almacenamiento, id_recarga).
+        Retorna el identificador unico del elemento asociado.
         """
-        # Busca el atributo id_* en el elemento
-        for attr in ['id_cliente', 'id_almacenamiento', 'id_recarga']:
-            if hasattr(self._elemento, attr):
-                return getattr(self._elemento, attr)
+        if hasattr(self._elemento, 'id_cliente'):
+            return self._elemento.id_cliente
+        if hasattr(self._elemento, 'id_almacenamiento'):
+            return self._elemento.id_almacenamiento
+        if hasattr(self._elemento, 'id_recarga'):
+            return self._elemento.id_recarga
         return None

@@ -1,13 +1,15 @@
 """
-RepositorioClientes: Acceso centralizado y único a instancias de Cliente.
-Utiliza HashMap para acceso O(1) y garantiza instanciación única.
+RepositorioClientes: Acceso centralizado y unico a instancias de Cliente.
+Utiliza HashMap para acceso O(1) y garantiza instanciacion unica.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
 from Backend.Dominio.Interfaces.IntRepos.IRepositorioClientes import IRepositorioClientes
 
 class RepositorioClientes(IRepositorioClientes):
     """
-    Repositorio para gestionar instancias únicas de Cliente.
+    Repositorio para gestionar instancias unicas de Cliente.
+    Garantiza unicidad y acceso O(1) mediante HashMap.
+    Notifica a observadores en operaciones CRUD y mapeo.
     """
     _instancia = None
 
@@ -15,49 +17,66 @@ class RepositorioClientes(IRepositorioClientes):
         if cls._instancia is None:
             cls._instancia = super().__new__(cls)
             cls._instancia._clientes = HashMap()
+            cls._instancia._observadores = set()
+            cls._instancia.notificar_observadores('repositorio_clientes_creado', None)
         return cls._instancia
+
+    def agregar_observador(self, observador):
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
 
     def agregar(self, cliente):
         """
-        Agrega una instancia de Cliente al repositorio.
-
-        :param cliente: La instancia de Cliente a agregar.
+        Agrega una nueva instancia de Cliente al repositorio.
+        :param cliente: Instancia de Cliente a agregar.
         """
         self._clientes.insertar(cliente.id_cliente, cliente)
+        self.notificar_observadores('repositorio_clientes_agregado', {'cliente': cliente})
 
     def obtener(self, id_cliente):
         """
-        Obtiene una instancia de Cliente del repositorio.
-
-        :param id_cliente: El ID del cliente a obtener.
-        :return: La instancia de Cliente correspondiente al ID, o None si no existe.
+        Obtiene una instancia de Cliente por su ID.
+        :param id_cliente: Identificador unico del cliente.
+        :return: Instancia de Cliente o None si no existe.
         """
-        return self._clientes.buscar(id_cliente)
+        cliente = self._clientes.buscar(id_cliente)
+        self.notificar_observadores('repositorio_clientes_obtenido', {'id': id_cliente, 'cliente': cliente})
+        return cliente
 
     def eliminar(self, id_cliente):
         """
-        Elimina una instancia de Cliente del repositorio.
-
-        :param id_cliente: El ID del cliente a eliminar.
+        Elimina una instancia de Cliente por su ID.
+        :param id_cliente: Identificador unico del cliente.
         """
         self._clientes.eliminar(id_cliente)
+        self.notificar_observadores('repositorio_clientes_eliminado', {'id': id_cliente})
 
     def todos(self):
         """
-        Obtiene una lista de todas las instancias de Cliente en el repositorio.
-
-        :return: Lista de todas las instancias de Cliente.
+        Retorna una lista de todas las instancias de Cliente.
+        :return: Lista de instancias de Cliente.
         """
-        return list(self._clientes.valores())
+        clientes = list(self._clientes.valores())
+        self.notificar_observadores('repositorio_clientes_todos', {'cantidad': len(clientes)})
+        return clientes
 
     def limpiar(self):
         """
-        Limpia el repositorio, eliminando todas las instancias de Cliente.
+        Reinicializa el repositorio, eliminando todas las instancias de Cliente.
         """
-        self._clientes.limpiar()
+        self._clientes = HashMap()
+        self.notificar_observadores('repositorio_clientes_limpiado', None)
 
     def obtener_hashmap(self):
         """
-        Retorna el hashmap interno de clientes (ID → Objeto Cliente).
+        Retorna el hashmap interno de clientes (ID → Objeto Cliente) como dict.
+        :return: Diccionario de clientes.
         """
+        self.notificar_observadores('repositorio_clientes_hashmap', None)
         return dict(self._clientes.items())

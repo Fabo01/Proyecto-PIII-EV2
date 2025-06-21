@@ -17,15 +17,29 @@ class verticeAVL:
 class AVL:
     """
     Árbol AVL para registrar rutas y su frecuencia de uso.
+    Notifica a observadores en operaciones CRUD y mapeo.
     """
     def __init__(self):
         self.raiz = None
+        self._observadores = set()
+        self.notificar_observadores('avl_creado', None)
+
+    def agregar_observador(self, observador):
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
 
     def insertar(self, clave, valor=None):
         # Aseguro que la clave sea simple antes de insertar
         if isinstance(clave, tuple) and len(clave) == 1:
             clave = clave[0]
         self.raiz = self._insertar(self.raiz, clave, valor)
+        self.notificar_observadores('avl_insertar', {'clave': clave, 'valor': valor})
 
     def _insertar(self, vertice, clave, valor=None):
         if not vertice:
@@ -40,21 +54,9 @@ class AVL:
         vertice.altura = 1 + max(self._altura(vertice.izquierda), self._altura(vertice.derecha))
         return self._balancear(vertice)
 
-    def buscar(self, clave):
-        return self._buscar(self.raiz, clave)
-
-    def _buscar(self, vertice, clave):
-        if not vertice:
-            return None
-        if clave == vertice.clave:
-            return vertice
-        elif clave < vertice.clave:
-            return self._buscar(vertice.izquierda, clave)
-        else:
-            return self._buscar(vertice.derecha, clave)
-
     def eliminar(self, clave):
         self.raiz = self._eliminar(self.raiz, clave)
+        self.notificar_observadores('avl_eliminar', {'clave': clave})
 
     def _eliminar(self, vertice, clave):
         if not vertice:
@@ -73,6 +75,21 @@ class AVL:
             vertice.derecha = self._eliminar(vertice.derecha, temp.clave)
         vertice.altura = 1 + max(self._altura(vertice.izquierda), self._altura(vertice.derecha))
         return self._balancear(vertice)
+
+    def buscar(self, clave):
+        resultado = self._buscar(self.raiz, clave)
+        self.notificar_observadores('avl_buscar', {'clave': clave, 'resultado': resultado})
+        return resultado
+
+    def _buscar(self, vertice, clave):
+        if not vertice:
+            return None
+        if clave == vertice.clave:
+            return vertice
+        elif clave < vertice.clave:
+            return self._buscar(vertice.izquierda, clave)
+        else:
+            return self._buscar(vertice.derecha, clave)
 
     def _minimo(self, vertice):
         while vertice.izquierda:
@@ -129,3 +146,17 @@ class AVL:
     def obtener_frecuencia(self, clave):
         vertice = self.buscar(clave)
         return vertice.valor if vertice else 0
+
+    def serializar(self):
+        self.notificar_observadores('avl_serializado', None)
+        return self._serializar_nodo(self.raiz)
+
+    def _serializar_nodo(self, nodo):
+        if not nodo:
+            return None
+        return {
+            'clave': nodo.clave,
+            'valor': nodo.valor,
+            'izq': self._serializar_nodo(nodo.izquierda),
+            'der': self._serializar_nodo(nodo.derecha)
+        }

@@ -6,7 +6,6 @@ Utiliza FabricaVertices y FabricaAristas para componentes internos.
 from Backend.Dominio.Dominio_Ruta import Ruta
 from Backend.Dominio.EntFabricas.FabricaVertices import FabricaVertices
 from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
-import logging
 from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 
 class FabricaRutas(FabricaInterfaz):
@@ -16,16 +15,12 @@ class FabricaRutas(FabricaInterfaz):
         if cls._instancia is None:
             cls._instancia = super().__new__(cls)
             cls._instancia.errores = []
-            cls._instancia.logger = logging.getLogger("FabricaRutas")
-            if not cls._instancia.logger.hasHandlers():
-                handler = logging.StreamHandler()
-                cls._instancia.logger.addHandler(handler)
-            cls._instancia.logger.setLevel(logging.INFO)
         return cls._instancia
 
     def crear(self, origen, destino, camino, peso_total, algoritmo, tiempo_calculo=None):
         """
         Crea o retorna una ruta única entre origen y destino y la registra en el repositorio.
+        Notifica a los observadores la creación y errores.
         """
         from Backend.Infraestructura.Repositorios.repositorio_rutas import RepositorioRutas
         repo = RepositorioRutas()
@@ -36,7 +31,8 @@ class FabricaRutas(FabricaInterfaz):
         )
         existente = repo.obtener(clave)
         if existente:
-            self.logger.info(f"Ruta {clave} ya existe, retornando instancia existente.")
+            if hasattr(self, 'notificar_observadores'):
+                self.notificar_observadores('ruta_existente', {'clave': clave})
             return existente
         try:
             fabrica_vertices = FabricaVertices()
@@ -44,10 +40,13 @@ class FabricaRutas(FabricaInterfaz):
             camino_vertices = [fabrica_vertices.crear(n.elemento()) for n in camino]
             ruta = Ruta(origen, destino, camino_vertices, peso_total, algoritmo, tiempo_calculo)
             repo.agregar(ruta, clave)
+            if hasattr(self, 'notificar_observadores'):
+                self.notificar_observadores('ruta_creada', {'clave': clave})
             return ruta
         except Exception as e:
-            self.logger.error(f"Error creando ruta {clave}: {e}")
             self.errores.append({'clave': clave, 'error': str(e)})
+            if hasattr(self, 'notificar_observadores'):
+                self.notificar_observadores('error_ruta', {'clave': clave, 'error': str(e)})
             return None
 
     def obtener(self, clave):

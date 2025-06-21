@@ -10,7 +10,7 @@ import logging
 router = APIRouter(prefix="/rutas", tags=["Rutas"])
 
 def get_simulacion_service():
-    return SimulacionAplicacionService
+    return SimulacionAplicacionService()
 
 # Configuración del logger
 logger = logging.getLogger("API.Rutas")
@@ -23,6 +23,9 @@ logger.setLevel(logging.INFO)
 
 @router.get("/", response_model=List[RespuestaRuta])
 def listar_rutas(service=Depends(get_simulacion_service)):
+    """
+    Devuelve la lista de rutas registradas en la simulacion.
+    """
     logger.info("GET /rutas llamado")
     rutas = service.listar_rutas()
     logger.info(f"GET /rutas retornó {len(rutas) if rutas else 0} rutas")
@@ -39,6 +42,9 @@ def listar_rutas(service=Depends(get_simulacion_service)):
 
 @router.get("/{id}", response_model=RespuestaRuta)
 def obtener_ruta(id: int, service=Depends(get_simulacion_service)):
+    """
+    Devuelve una ruta por su id.
+    """
     logger.info(f"GET /rutas/{id} llamado")
     try:
         ruta = service.obtener_ruta(id)
@@ -53,6 +59,9 @@ def obtener_ruta(id: int, service=Depends(get_simulacion_service)):
 
 @router.get("/por_almacen/{id_almacen}", response_model=List[RespuestaRuta])
 def rutas_por_almacen(id_almacen: int, service=Depends(get_simulacion_service)):
+    """
+    Devuelve las rutas que tienen como origen el almacenamiento indicado.
+    """
     logger.info(f"GET /rutas/por_almacen/{id_almacen} llamado")
     rutas = service.listar_rutas()
     rutas_filtradas = [r for r in rutas if hasattr(r, 'origen') and getattr(r.origen, 'id_almacenamiento', None) == id_almacen]
@@ -70,6 +79,9 @@ def rutas_por_almacen(id_almacen: int, service=Depends(get_simulacion_service)):
 
 @router.get("/floyd_warshall", response_model=RespuestaFloydWarshall)
 def floyd_warshall_todos_los_caminos(service=Depends(get_simulacion_service)):
+    """
+    Calcula todos los caminos usando Floyd-Warshall.
+    """
     logger.info("GET /rutas/floyd_warshall llamado")
     try:
         resultado = service.obtener_todos_los_caminos_floyd_warshall()
@@ -81,6 +93,9 @@ def floyd_warshall_todos_los_caminos(service=Depends(get_simulacion_service)):
 
 @router.get("/comparar_tiempos/{id_pedido}")
 def comparar_tiempos_algoritmos(id_pedido: int, service=Depends(get_simulacion_service)):
+    """
+    Compara los tiempos de ejecucion de los algoritmos para un pedido.
+    """
     logger.info(f"GET /rutas/comparar_tiempos/{id_pedido} llamado")
     resultado = service.comparar_tiempos_algoritmos(id_pedido)
     logger.info(f"GET /rutas/comparar_tiempos/{id_pedido}: Resultado: {resultado}")
@@ -88,6 +103,9 @@ def comparar_tiempos_algoritmos(id_pedido: int, service=Depends(get_simulacion_s
 
 @router.get("/arbol_expansion_minima")
 def obtener_arbol_expansion_minima(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el arbol de expansion minima del grafo.
+    """
     logger.info("GET /rutas/arbol_expansion_minima llamado")
     resultado = service.obtener_arbol_expansion_minima()
     logger.info(f"GET /rutas/arbol_expansion_minima: Árbol calculado y serializado correctamente")
@@ -95,6 +113,9 @@ def obtener_arbol_expansion_minima(service=Depends(get_simulacion_service)):
 
 @router.get("/camino")
 def calcular_camino_entre_vertices(origen: int, destino: int, algoritmo: str = 'dijkstra', id_pedido: int = None, service=Depends(get_simulacion_service)):
+    """
+    Calcula el camino entre dos vertices usando el algoritmo especificado.
+    """
     logger.info(f"[API] /rutas/camino llamado con origen={origen} (type: {type(origen)}), destino={destino} (type: {type(destino)}), algoritmo={algoritmo} (type: {type(algoritmo)}), id_pedido={id_pedido}")
     sim = service._dominio_service
     try:
@@ -126,6 +147,9 @@ def calcular_camino_entre_vertices(origen: int, destino: int, algoritmo: str = '
 
 @router.get("/calcular")
 def calcular_ruta_pedido(id_pedido: int, algoritmo: str, service=Depends(get_simulacion_service)):
+    """
+    Calcula la ruta para un pedido usando el algoritmo especificado.
+    """
     logger.info(f"[API] /rutas/calcular llamado con id_pedido={id_pedido}, algoritmo={algoritmo}")
     # Validar existencia del grafo y pedido
     sim = service._dominio_service
@@ -152,7 +176,7 @@ def calcular_ruta_pedido(id_pedido: int, algoritmo: str, service=Depends(get_sim
 @router.get("/floydwarshall_pedidos")
 def floydwarshall_para_todos_los_pedidos(service=Depends(get_simulacion_service)):
     """
-    Calcula la mejor ruta para todos los pedidos usando Floyd-Warshall, considerando autonomía y recargas.
+    Calcula la mejor ruta para todos los pedidos usando Floyd-Warshall.
     """
     logger.info("GET /rutas/floydwarshall_pedidos llamado")
     try:
@@ -180,7 +204,7 @@ def floydwarshall_para_todos_los_pedidos(service=Depends(get_simulacion_service)
 @router.get("/pedido_todos_algoritmos")
 def calcular_todas_rutas_todos_algoritmos(service=Depends(get_simulacion_service)):
     """
-    Calcula todas las rutas posibles para todos los pedidos usando todos los algoritmos, reportando tiempos antes de marcar como completados.
+    Calcula todas las rutas posibles para todos los pedidos usando todos los algoritmos.
     """
     logger.info("GET /rutas/pedido_todos_algoritmos llamado")
     try:

@@ -10,73 +10,93 @@ from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 
 def get_simulacion_service():
-    return SimulacionAplicacionService
+    return SimulacionAplicacionService()
 
 @router.get("/", response_model=List[RespuestaCliente])
 def listar_clientes(service=Depends(get_simulacion_service)):
     """
     Devuelve la lista de clientes registrados en la simulación.
     """
-    clientes = service.listar_clientes()
+    clientes = service.obtener_clientes()
     if clientes is None:
-        raise HTTPException(status_code=400, detail="Simulación no iniciada")
-    if not clientes:
         raise HTTPException(status_code=404, detail="No hay clientes registrados")
-    try:
-        return [MapeadorCliente.a_dto(c) for c in clientes]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error de mapeo: {str(e)}")
+    return [MapeadorCliente.a_dto(c) for c in clientes]
+
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def clientes_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de clientes (ID → Objeto Cliente serializable).
+    """
+    hashmap = service.obtener_clientes_hashmap()
+    if hashmap is None:
+        raise HTTPException(status_code=404, detail="No hay clientes en el sistema")
+    return RespuestaHashMap(hashmap=hashmap)
 
 @router.get("/{id}", response_model=RespuestaCliente)
 def obtener_cliente(id: int, service=Depends(get_simulacion_service)):
     """
     Devuelve un cliente por su id, usando el servicio y mapeador.
     """
+    cliente = service.buscar_cliente(id)
+    if cliente is None:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return MapeadorCliente.a_dto(cliente)
+
+@router.post("/crear", response_model=RespuestaCliente)
+def crear_cliente(dto: dict, service=Depends(get_simulacion_service)):
+    """
+    Crea un nuevo cliente a partir de los datos recibidos.
+    """
     try:
-        cliente = service.obtener_cliente(id)
-        if cliente is None:
-            raise HTTPException(status_code=404, detail="Cliente no encontrado")
+        cliente = service.crear_cliente(dto)
         return MapeadorCliente.a_dto(cliente)
     except Exception as e:
-        raise HTTPException(status_code=404, detail=f"Cliente no encontrado: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Error al crear cliente: {str(e)}")
+
+@router.patch("/{id}", response_model=RespuestaCliente)
+def actualizar_cliente(id: int, dto: dict, service=Depends(get_simulacion_service)):
+    """
+    Actualiza los datos de un cliente existente.
+    """
+    try:
+        cliente = service.actualizar_cliente(id, dto)
+        return MapeadorCliente.a_dto(cliente)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al actualizar cliente: {str(e)}")
+
+@router.delete("/{id}", response_model=dict)
+def eliminar_cliente(id: int, service=Depends(get_simulacion_service)):
+    """
+    Elimina un cliente por su id.
+    """
+    try:
+        service.eliminar_cliente(id)
+        return {"mensaje": "Cliente eliminado correctamente"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al eliminar cliente: {str(e)}")
 
 @router.get("/con_pedidos/{id_almacen}", response_model=List[RespuestaCliente])
 def clientes_con_pedidos_en_almacen(id_almacen: int, service=Depends(get_simulacion_service)):
     """
     Devuelve los clientes que tienen al menos un pedido cuyo almacenamiento de origen es el dado.
     """
-    clientes = service.listar_clientes()
-    pedidos = service.listar_pedidos()
-    clientes_filtrados = []
-    for cliente in clientes:
-        tiene_pedido = any(
-            getattr(p, 'id_almacenamiento', None) == id_almacen and getattr(p, 'id_cliente', None) == getattr(cliente, 'id_cliente', None)
-            for p in pedidos
-        )
-        if tiene_pedido:
-            clientes_filtrados.append(cliente)
-    try:
-        return [MapeadorCliente.a_dto(c) for c in clientes_filtrados]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error de mapeo: {str(e)}")
+    clientes = service.clientes_con_pedidos_en_almacen(id_almacen)
+    return [MapeadorCliente.a_dto(c) for c in clientes]
+
+@router.get("/{id_cliente}/pedidos", response_model=List[RespuestaPedido])
+def pedidos_por_cliente(id_cliente: int, service=Depends(get_simulacion_service)):
+    """
+    Devuelve los pedidos asociados a un cliente específico.
+    """
+    pedidos = service.obtener_pedidos_por_cliente(id_cliente)
+    if pedidos is None:
+        raise HTTPException(status_code=404, detail="No hay pedidos para el cliente especificado")
+    return [MapeadorPedido.a_dto(p) for p in pedidos]
 
 @router.get("/{id_cliente}/pedidos_en_almacen/{id_almacen}", response_model=List[RespuestaPedido])
 def pedidos_cliente_en_almacen(id_cliente: int, id_almacen: int, service=Depends(get_simulacion_service)):
     """
     Devuelve los pedidos de un cliente en un almacenamiento específico.
     """
-    pedidos = service.listar_pedidos()
-    pedidos_filtrados = [p for p in pedidos if getattr(p, 'id_cliente', None) == id_cliente and getattr(p, 'id_almacenamiento', None) == id_almacen]
-    try:
-        return [MapeadorPedido.a_dto(p) for p in pedidos_filtrados]
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error de mapeo: {str(e)}")
-
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def obtener_clientes_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de clientes (ID → Objeto Cliente serializable).
-    """
-    hashmap = service.obtener_clientes_hashmap()
-    hashmap_dto = {str(k): MapeadorCliente.a_dto(v).model_dump() for k, v in hashmap.items()}
-    return RespuestaHashMap(hashmap=hashmap_dto)
+    pedidos = service.pedidos_cliente_en_almacen(id_cliente, id_almacen)
+    return [MapeadorPedido.a_dto(p) for p in pedidos]

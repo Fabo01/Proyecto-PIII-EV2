@@ -5,11 +5,10 @@ Basado en Docs/edge.py
 
 class Arista:
     """
-    Representa una arista (conexión) entre dos vértices en el grafo.
-    El atributo 'peso' almacena el peso/coste de la arista.
-    No contiene lógica de negocio, solo estructura de datos.
+    Representa una arista (conexion) entre dos vertices en el grafo.
+    Notifica a observadores en operaciones CRUD y mapeo.
     """
-    __slots__ = ['_origen', '_destino', '_peso']
+    __slots__ = ['_origen', '_destino', '_peso', '_observadores']
 
     def __init__(self, origen, destino, peso):
         """
@@ -18,6 +17,8 @@ class Arista:
         self._origen = origen
         self._destino = destino
         self._peso = peso
+        self._observadores = set()
+        self.notificar_observadores('arista_creada', {'origen': origen, 'destino': destino, 'peso': peso})
 
     @property
     def origen(self):
@@ -40,6 +41,38 @@ class Arista:
         """
         return self._peso
 
+    def set_extremos(self, nuevo_origen, nuevo_destino):
+        """
+        Actualiza los vértices de origen y destino de la arista.
+        """
+        self._origen = nuevo_origen
+        self._destino = nuevo_destino
+        self.notificar_observadores('arista_extremos_actualizados', {'origen': nuevo_origen, 'destino': nuevo_destino})
+
+    def set_peso(self, nuevo_peso):
+        """
+        Actualiza el peso de la arista.
+        """
+        self._peso = nuevo_peso
+        self.notificar_observadores('arista_peso_actualizado', {'peso': nuevo_peso})
+
+    def agregar_observador(self, observador):
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
+
+    def serializar(self):
+        """
+        Serializa la arista notificando a los observadores.
+        """
+        self.notificar_observadores('arista_serializada', {'origen': self._origen, 'destino': self._destino, 'peso': self._peso})
+        return {'origen': str(self._origen), 'destino': str(self._destino), 'peso': self._peso}
+
     def extremos(self):
         """
         Retorna una tupla (origen, destino) de los vértices conectados.
@@ -50,7 +83,12 @@ class Arista:
         """
         Retorna el vértice opuesto al dado en esta arista.
         """
-        return self._destino if vertice is self._origen else self._origen
+        if vertice == self._origen:
+            return self._destino
+        elif vertice == self._destino:
+            return self._origen
+        else:
+            raise ValueError('El vertice no es extremo de esta arista')
 
     def es_conexion(self, tipo_origen, tipo_destino):
         """
@@ -66,16 +104,10 @@ class Arista:
         """
         Dos aristas son iguales si conectan los mismos vértices en el mismo orden y tienen el mismo peso.
         """
-        if not isinstance(other, Arista):
-            return False
-        return (
-            self._origen == other._origen
-            and self._destino == other._destino
-            and self._peso == other._peso
-        )
+        return isinstance(other, Arista) and self._origen == other._origen and self._destino == other._destino and self._peso == other._peso
 
     def __str__(self):
         return f"Arista({self._origen} -> {self._destino}, peso={self._peso})"
 
     def __repr__(self):
-        return self.__str__()
+        return str(self)

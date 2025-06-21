@@ -2,18 +2,11 @@
 Estrategia de ruta usando Floyd-Warshall (para todos los pares, pero aquí solo reconstruye una ruta).
 """
 from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
-import logging
 
 class RutaEstrategiaFloydWarshall(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo, autonomia=50, estaciones_recarga=None):
-        logger = logging.getLogger("RutaEstrategiaFloydWarshall")
-        if not logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        logger.info(f"[FloydWarshall] Iniciando cálculo de ruta: origen={origen}, destino={destino}, autonomia={autonomia}")
+        if hasattr(self, 'notificar_observadores'):
+            self.notificar_observadores('inicio_calculo_ruta', {'algoritmo': 'floydwarshall', 'origen': origen, 'destino': destino})
         assert origen in grafo.vertices(), "El vértice de origen no es único o no existe en el grafo."
         assert destino in grafo.vertices(), "El vértice de destino no es único o no existe en el grafo."
         vertices = list(grafo.vertices())
@@ -25,7 +18,6 @@ class RutaEstrategiaFloydWarshall(IRutaEstrategia):
             dist[i][i] = 0
             next_v[i][i] = v
         for arista in grafo.aristas():
-            logger.info(f"[FloydWarshall] Evaluando arista: {arista}")
             assert arista in grafo.aristas(), "La arista no es única o no existe en el grafo."
             i, j = idx[arista.origen], idx[arista.destino]
             dist[i][j] = arista.peso
@@ -38,16 +30,18 @@ class RutaEstrategiaFloydWarshall(IRutaEstrategia):
                         next_v[i][j] = next_v[i][k]
         i, j = idx[origen], idx[destino]
         if dist[i][j] == float('inf'):
-            logger.warning(f"[FloydWarshall] No existe ruta posible entre {origen} y {destino}")
-            raise ValueError("No existe una ruta posible entre los vertices seleccionados")
+            if hasattr(self, 'notificar_observadores'):
+                self.notificar_observadores('error_calculo_ruta', {'algoritmo': 'floydwarshall', 'origen': origen, 'destino': destino, 'error': 'No existe una ruta posible'})
+            raise ValueError(f"No existe una ruta posible entre {origen} y {destino}")
         camino = [origen]
         while origen != destino:
             origen = next_v[idx[origen]][j]
             camino.append(origen)
-        logger.info(f"[FloydWarshall] Ruta calculada: {camino}, costo total: {dist[i][j]}")
         if autonomia is not None and estaciones_recarga is not None:
             camino, _ = self._insertar_recargas_si_necesario(camino, grafo, autonomia, estaciones_recarga)
-        return camino, dist[i][j]
+        if hasattr(self, 'notificar_observadores'):
+            self.notificar_observadores('ruta_calculada', {'algoritmo': 'floydwarshall', 'camino': camino})
+        return camino
 
     def _insertar_recargas_si_necesario(self, camino, grafo, autonomia, estaciones_recarga):
         if not estaciones_recarga:

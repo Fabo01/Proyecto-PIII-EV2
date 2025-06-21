@@ -1,56 +1,86 @@
 """
 Clase Cliente para representar un cliente en la simulación logística de drones.
+Incluye soporte para observadores de eventos de dominio.
 """
 
 class Cliente:
     """
     Representa un cliente con identificador, nombre y tipo_elemento. Maneja sus propios pedidos como objetos completos.
-    No depende de la estructura del grafo ni de la lógica de simulación.
+    Permite agregar observadores para auditar eventos de negocio.
     """
     def __init__(self, id_cliente, nombre):
+        """
+        Inicializa un cliente con su identificador y nombre. Crea la lista interna de pedidos.
+        """
         self.id_cliente = id_cliente
         self.nombre = nombre
         self.tipo_elemento = 'cliente'
-        self.pedidos = []  # Lista de objetos Pedido asociados a este cliente
+        self._pedidos = []  # Lista de objetos Pedido asociados a este cliente
+        self._observadores = set()
+        self.notificar_observadores('cliente_creado', {'id_cliente': id_cliente, 'nombre': nombre})
+
+    def agregar_observador(self, observador):
+        """
+        Agrega un observador para recibir notificaciones de eventos de negocio.
+        """
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        """
+        Quita un observador, dejando de notificarle sobre eventos futuros.
+        """
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        """
+        Notifica a todos los observadores registrados sobre un evento.
+        """
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
 
     def agregar_pedido(self, pedido):
         """
-        Agrega un pedido (objeto completo) a la lista de pedidos del cliente.
+        Agrega un pedido a la lista interna y notifica a los observadores.
         """
-        self.pedidos.append(pedido)
+        self._pedidos.append(pedido)
+        self.notificar_observadores('cliente_pedido_agregado', {'pedido': pedido})
 
     def eliminar_pedido(self, pedido):
         """
-        Elimina un pedido (objeto completo) de la lista de pedidos del cliente.
+        Elimina el pedido si existe en la lista interna.
+        Notifica a los observadores sobre la eliminación del pedido.
         """
-        if pedido in self.pedidos:
-            self.pedidos.remove(pedido)
+        if pedido in self._pedidos:
+            self._pedidos.remove(pedido)
+            self.notificar_observadores('cliente_pedido_eliminado', {'pedido': pedido})
 
     def limpiar_pedidos(self):
         """
-        Elimina todos los pedidos asociados a este cliente.
+        Vacia la lista de pedidos por completo.
+        Notifica a los observadores que los pedidos han sido limpiados.
         """
-        self.pedidos.clear()
+        self._pedidos.clear()
+        self.notificar_observadores('cliente_pedidos_limpiados', None)
 
     def obtener_pedidos(self):
         """
-        Retorna la lista de pedidos (objetos completos) asociados a este cliente, ordenados por prioridad (de mayor a menor).
+        Retorna la lista completa de pedidos asociados.
         """
-        prioridad_orden = {
-            'emergencia': 6,
-            'muy alto': 5,
-            'alto': 4,
-            'medio': 3,
-            'bajo': 2,
-            'muy bajo': 1
-        }
-        return sorted(self.pedidos, key=lambda p: prioridad_orden.get(p.prioridad, 0), reverse=True)
+        return list(self._pedidos)
 
     def total_pedidos(self):
         """
-        Retorna el número total de pedidos asociados a este cliente.
+        Retorna la cantidad de pedidos que tiene el cliente.
         """
-        return len(self.pedidos)
+        return len(self._pedidos)
+
+    def serializar(self):
+        """
+        Prepara los datos del cliente para su almacenamiento o transmisión.
+        Notifica a los observadores que el cliente ha sido serializado.
+        """
+        self.notificar_observadores('cliente_serializado', None)
+        return {'id_cliente': self.id_cliente, 'nombre': self.nombre, 'total_pedidos': self.total_pedidos()}
 
     def __str__(self):
-        return f"Cliente {self.id_cliente}: {self.nombre}"
+        return f"Cliente {self.id_cliente}: {self.nombre} (Pedidos: {self.total_pedidos()})"

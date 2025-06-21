@@ -11,10 +11,9 @@ from Backend.Infraestructura.Repositorios.repositorio_rutas import RepositorioRu
 
 class SimulacionAplicacionService(ISimulacionAplicacionService):
     """
-    Capa de aplicación para la simulación, delega todas las acciones al servicio de dominio.
+    Capa de aplicacion para la simulacion, delega todas las acciones al servicio de dominio.
     """
     def __init__(self, dominio_service: SimulacionDominioService = None):
-        # Permitir construcción sin argumentos: crear simulación y servicio de dominio por defecto
         if dominio_service is None:
             simulacion = Simulacion(
                 RepositorioClientes(), RepositorioAlmacenamientos(),
@@ -48,6 +47,9 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
     def obtener_pedidos(self):
         return self._serv.obtener_pedidos()
 
+    def set_estrategia_ruta(self, estrategia):
+        return self._serv.set_estrategia_ruta(estrategia)
+
     def calcular_ruta_pedido(self, id_pedido: int, algoritmo: str = None):
         return self._serv.calcular_ruta_pedido(id_pedido, algoritmo)
 
@@ -80,9 +82,8 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
 
     def obtener_pedidos_hashmap(self):
         return self._serv.obtener_pedidos_hashmap()
-    # Métodos adicionales para cumplir con ISimulacionAplicacionService
+
     def estado_actual(self):
-        # Retorna estado completo de la simulación
         return {
             "clientes": self.listar_clientes(),
             "almacenamientos": self.listar_almacenamientos(),
@@ -106,33 +107,32 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
         return self.obtener_pedidos()
 
     def listar_rutas(self):
-        # Listar todas las rutas actuales (frecuentes o definidas)
         try:
             return self._serv.obtener_rutas_mas_frecuentes()
         except Exception:
             return []
 
     def obtener_estadisticas(self):
-        # Delegar la obtención de estadísticas al servicio de dominio
         return self._serv.obtener_estadisticas()
 
     def obtener_cliente(self, id_cliente: int):
-        # Delegar la obtención de un cliente específico al servicio de dominio
         return self._serv.obtener_cliente(id_cliente)
 
     def obtener_almacenamiento(self, id_almacenamiento: int):
-        # Delegar la obtención de un almacenamiento específico al servicio de dominio
         return self._serv.obtener_almacenamiento(id_almacenamiento)
 
     def obtener_recarga(self, id_recarga: int):
-        # Delegar la obtención de una estación de recarga específica al servicio de dominio
         return self._serv.obtener_recarga(id_recarga)
 
     def obtener_pedido(self, id_pedido: int):
-        # Delegar la obtención de un pedido específico al servicio de dominio
         return self._serv.obtener_pedido(id_pedido)
 
     def obtener_ruta(self, id_ruta: int):
-        # Delegar la obtención de una ruta específica al servicio de dominio
         return self._serv.obtener_ruta(id_ruta)
+
+    def notificar_evento(self, evento, datos=None):
+        return self._serv.notificar_evento(evento, datos)
+
+    def reiniciar_todo(self):
+        return self._serv.reiniciar_todo()
 

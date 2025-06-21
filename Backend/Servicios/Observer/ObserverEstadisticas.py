@@ -5,9 +5,15 @@ from Backend.Dominio.Interfaces.IntObs.IObserver import IObserver
 
 class ObserverEstadisticas(IObserver):
     def __init__(self, servicio_estadisticas):
+        """
+        Inicializa el observer con el servicio de estadísticas.
+        """
         self.servicio_estadisticas = servicio_estadisticas
 
     def actualizar(self, evento, datos=None):
+        """
+        Reacciona a eventos publicados por el sujeto observable.
+        """
         if evento == "pedido_entregado":
             self.servicio_estadisticas.registrar_entrega(datos)
         elif evento == "ruta_calculada":

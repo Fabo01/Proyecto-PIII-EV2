@@ -1,3 +1,8 @@
+"""
+API principal para la simulacion logistica de drones de Correos Chile.
+Incluye todos los endpoints de gestion de entidades, rutas, simulacion y estadisticas.
+"""
+
 from Backend.API.DTOs.BaseArista import BaseArista
 from Backend.API.DTOs.BaseVertice import BaseVertice
 from Backend.API.DTOs.BaseRuta import BaseRuta
@@ -44,3 +49,16 @@ app.include_router(clientes_router)
 app.include_router(almacenamientos_router)
 app.include_router(aristas_router)
 app.include_router(vertices_router)
+
+
+@app.get("/", tags=["Root"])
+def root():
+    """
+    Endpoint raiz que devuelve un mensaje de bienvenida y estado basico de la API.
+    """
+    return {
+        "mensaje": "API de Simulacion de Drones Correos Chile activa.",
+        "endpoints": [
+            "/simulacion", "/rutas", "/recargas", "/pedidos", "/estadisticas", "/clientes", "/almacenamientos", "/aristas", "/vertices"
+        ]
+    }

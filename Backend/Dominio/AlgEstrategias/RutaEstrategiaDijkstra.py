@@ -3,18 +3,11 @@ Estrategia de ruta usando Dijkstra.
 """
 from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
 import heapq
-import logging
 
 class RutaEstrategiaDijkstra(IRutaEstrategia):
     def calcular_ruta(self, origen, destino, grafo, autonomia=50, estaciones_recarga=None):
-        logger = logging.getLogger("RutaEstrategiaDijkstra")
-        if not logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        logger.info(f"[Dijkstra] Iniciando cálculo de ruta: origen={origen}, destino={destino}, autonomia={autonomia}")
+        if hasattr(self, 'notificar_observadores'):
+            self.notificar_observadores('inicio_calculo_ruta', {'algoritmo': 'dijkstra', 'origen': origen, 'destino': destino})
         assert origen in grafo.vertices(), "El vértice de origen no es único o no existe en el grafo."
         assert destino in grafo.vertices(), "El vértice de destino no es único o no existe en el grafo."
         dist = {v: float('inf') for v in grafo.vertices()}
@@ -23,12 +16,9 @@ class RutaEstrategiaDijkstra(IRutaEstrategia):
         heap = [(0, origen)]
         while heap:
             d, u = heapq.heappop(heap)
-            logger.info(f"[Dijkstra] Visitando vertice: {u}, distancia acumulada: {d}")
             if u == destino:
-                logger.info(f"[Dijkstra] vertice destino alcanzado: {destino}")
                 break
             for arista in grafo.aristas_incidentes(u, salientes=True):
-                logger.info(f"[Dijkstra] Evaluando arista: {arista}")
                 assert arista in grafo.aristas(), "La arista no es única o no existe en el grafo."
                 v = arista.destino
                 peso = arista.peso
@@ -37,7 +27,8 @@ class RutaEstrategiaDijkstra(IRutaEstrategia):
                     prev[v] = u
                     heapq.heappush(heap, (dist[v], v))
         if dist[destino] == float('inf'):
-            logger.warning(f"[Dijkstra] No existe ruta posible entre {origen} y {destino}")
+            if hasattr(self, 'notificar_observadores'):
+                self.notificar_observadores('error_calculo_ruta', {'algoritmo': 'dijkstra', 'origen': origen, 'destino': destino, 'error': 'No existe una ruta posible'})
             raise ValueError("No existe una ruta posible entre los vertices seleccionados")
         camino = []
         actual = destino
@@ -45,10 +36,9 @@ class RutaEstrategiaDijkstra(IRutaEstrategia):
             camino.append(actual)
             actual = prev[actual]
         camino.reverse()
-        logger.info(f"[Dijkstra] Ruta calculada: {camino}, costo total: {dist[destino]}")
-        if autonomia is not None and estaciones_recarga is not None:
-            camino, _ = self._insertar_recargas_si_necesario(camino, grafo, autonomia, estaciones_recarga)
-        return camino, dist[destino]
+        if hasattr(self, 'notificar_observadores'):
+            self.notificar_observadores('ruta_calculada', {'algoritmo': 'dijkstra', 'camino': camino})
+        return camino
 
     def _insertar_recargas_si_necesario(self, camino, grafo, autonomia, estaciones_recarga):
         """

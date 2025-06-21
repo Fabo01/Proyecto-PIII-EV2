@@ -1,16 +1,36 @@
 """
-Clase Recarga para representar una estación de recarga en la simulación logística de drones.
+Clase Recarga para representar una estacion de recarga en la simulacion logistica de drones.
+Incluye soporte para observadores de eventos de dominio.
 """
 
 class Recarga:
     """
-    Representa una estación de recarga en la red de drones.
-    Puede ser referenciada por un vértice para mantener la posición.
+    Representa una estacion de recarga en la red de drones.
+    Permite agregar observadores para auditar eventos de negocio.
     """
     def __init__(self, id_recarga, nombre):
+        """
+        Inicializa una estacion de recarga con su identificador y nombre.
+        """
         self.id_recarga = id_recarga
         self.nombre = nombre
         self.tipo_elemento = 'recarga'
+        self._observadores = set()
+        self.notificar_observadores('recarga_creada', {'id_recarga': id_recarga, 'nombre': nombre})
+
+    def agregar_observador(self, observador):
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
+
+    def serializar(self):
+        self.notificar_observadores('recarga_serializada', None)
+        return {'id_recarga': self.id_recarga, 'nombre': self.nombre}
 
     def __str__(self):
         return f"Recarga {self.id_recarga}: {self.nombre}"

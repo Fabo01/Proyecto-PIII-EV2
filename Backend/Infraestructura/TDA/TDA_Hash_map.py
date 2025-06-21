@@ -6,85 +6,60 @@ Basado en Docs/TDA-Map.py
 class HashMap:
     """
     Implementación de un mapa hash para acceso O(1) a clientes y pedidos.
-    Garantiza referencias únicas, no re-instancia claves/valores.
+    Notifica a observadores en operaciones CRUD y mapeo.
     """
     def __init__(self):
-        self._datos = {}
+        self._mapa = dict()
+        self._observadores = set()
+        self.notificar_observadores('hashmap_creado', None)
+
+    def agregar_observador(self, observador):
+        self._observadores.add(observador)
+
+    def quitar_observador(self, observador):
+        self._observadores.discard(observador)
+
+    def notificar_observadores(self, evento, datos=None):
+        for obs in self._observadores:
+            obs.actualizar(evento, self, datos)
 
     def insertar(self, clave, valor):
-        """
-        Inserta un elemento en el HashMap. Si la clave existe, sobreescribe la referencia.
-        """
-        self._datos[clave] = valor
+        self._mapa[clave] = valor
+        self.notificar_observadores('hashmap_insertar', {'clave': clave, 'valor': valor})
 
     def buscar(self, clave):
         """
         Busca un elemento en el HashMap. Retorna el valor o None si no existe.
         """
-        return self._datos.get(clave, None)
+        resultado = self._mapa.get(clave)
+        self.notificar_observadores('hashmap_buscar', {'clave': clave, 'resultado': resultado})
+        return resultado
 
     def eliminar(self, clave):
         """
         Elimina un elemento del HashMap. No lanza excepción si la clave no existe.
         """
-        if clave in self._datos:
-            del self._datos[clave]
-
-    def __getitem__(self, clave):
-        if clave not in self._datos:
-            raise KeyError(f"Clave {clave} no encontrada en HashMap")
-        return self._datos[clave]
-
-    def __setitem__(self, clave, valor):
-        self._datos[clave] = valor
-
-    def __delitem__(self, clave):
-        if clave in self._datos:
-            del self._datos[clave]
-
-    def __len__(self):
-        return len(self._datos)
-
-    def __iter__(self):
-        return iter(self._datos)
-
-    def __contains__(self, clave):
-        return clave in self._datos
-
-    def obtener(self, clave, defecto=None):
-        return self._datos.get(clave, defecto)
-
-    def establecer_defecto(self, clave, defecto=None):
-        return self._datos.setdefault(clave, defecto)
-
-    def extraer(self, clave, defecto=None):
-        return self._datos.pop(clave, defecto)
-
-    def extraer_item(self):
-        return self._datos.popitem()
+        if clave in self._mapa:
+            valor = self._mapa.pop(clave)
+            self.notificar_observadores('hashmap_eliminar', {'clave': clave, 'valor': valor})
+        else:
+            self.notificar_observadores('hashmap_eliminar_inexistente', {'clave': clave})
 
     def limpiar(self):
-        self._datos.clear()
-
-    def claves(self):
-        return list(self._datos.keys())
-
-    def valores(self):
-        return list(self._datos.values())
+        self._mapa.clear()
+        self.notificar_observadores('hashmap_limpiado', None)
 
     def items(self):
-        return list(self._datos.items())
+        self.notificar_observadores('hashmap_items', None)
+        return self._mapa.items()
 
-    def actualizar(self, otro):
-        self._datos.update(otro._datos if isinstance(otro, HashMap) else otro)
+    def valores(self):
+        """
+        Retorna los valores almacenados en el HashMap.
+        """
+        self.notificar_observadores('hashmap_valores', None)
+        return self._mapa.values()
 
-    def __eq__(self, otro):
-        if not isinstance(otro, HashMap):
-            return False
-        return self._datos == otro._datos
-
-    def __ne__(self, otro):
-        return not self.__eq__(otro)
-
-    def __str__(self):
-        return str(self._datos)
+    def serializar(self):
+        self.notificar_observadores('hashmap_serializado', None)
+        return dict(self._mapa)

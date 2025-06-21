@@ -1,7 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel
 from .RespuestaVertice import RespuestaVertice
-import logging
 
 class RespuestaRuta(BaseModel):
     """
@@ -18,11 +17,5 @@ class RespuestaRuta(BaseModel):
 
     def __init__(self, **data):
         super().__init__(**data)
-        logger = logging.getLogger("DTO.Ruta")
-        if not logger.hasHandlers():
-            handler = logging.StreamHandler()
-            formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-        logger.setLevel(logging.INFO)
-        logger.info(f"[RespuestaRuta] Creada: origen={self.origen}, destino={self.destino}, camino={self.camino}, peso_total={self.peso_total}, algoritmo={self.algoritmo}, tiempo_calculo={self.tiempo_calculo}")
+        if hasattr(self, 'notificar_observadores'):
+            self.notificar_observadores('dto_ruta_serializado', {'origen': self.origen, 'destino': self.destino, 'camino': self.camino, 'peso_total': self.peso_total, 'algoritmo': self.algoritmo, 'tiempo_calculo': self.tiempo_calculo})
