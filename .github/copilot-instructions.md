@@ -20,10 +20,10 @@ Siempre debes seguir el documento `Docs/Requisitos.md` como la base y documentac
 - La gestión de pedidos es completamente independiente de la lógica de Cliente y de los vértices.
 - Dashboard funcional con Streamlit, visualización de grafos y rutas, árbol AVL y estadísticas básicas.
 - Manejo de rutas y pedidos, registro en AVL, acceso O(1) con HashMap.
-- Tests BDD para TDA, modelos y simulación, verificando la correcta clasificación de nodos y la separación de responsabilidades.
+- Tests BDD para TDA, modelos y simulación, verificando la correcta clasificación de vertices y la separación de responsabilidades.
 - Documentación técnica y funcional generada.
 - Corrección de imports y compatibilidad multiplataforma.
-- Visualización de la red con colores y leyendas por tipo de nodo.
+- Visualización de la red con colores y leyendas por tipo de vertice.
 - Manejo básico de errores en la interfaz visual.
 - Implementación de un árbol AVL para gestionar pedidos y rutas.
 - Implementación de un HashMap para acceso rápido a pedidos y clientes.

@@ -4,24 +4,24 @@ Clase Cliente para representar un cliente en la simulación logística de drones
 
 class Cliente:
     """
-    Representa un cliente con identificador, nombre y tipo_elemento. Maneja sus propios pedidos.
+    Representa un cliente con identificador, nombre y tipo_elemento. Maneja sus propios pedidos como objetos completos.
     No depende de la estructura del grafo ni de la lógica de simulación.
     """
     def __init__(self, id_cliente, nombre):
         self.id_cliente = id_cliente
         self.nombre = nombre
         self.tipo_elemento = 'cliente'
-        self.pedidos = []  # Lista de pedidos asociados a este cliente (Pedido)
+        self.pedidos = []  # Lista de objetos Pedido asociados a este cliente
 
     def agregar_pedido(self, pedido):
         """
-        Agrega un pedido a la lista de pedidos del cliente.
+        Agrega un pedido (objeto completo) a la lista de pedidos del cliente.
         """
         self.pedidos.append(pedido)
 
     def eliminar_pedido(self, pedido):
         """
-        Elimina un pedido de la lista de pedidos del cliente.
+        Elimina un pedido (objeto completo) de la lista de pedidos del cliente.
         """
         if pedido in self.pedidos:
             self.pedidos.remove(pedido)
@@ -34,7 +34,7 @@ class Cliente:
 
     def obtener_pedidos(self):
         """
-        Retorna la lista de pedidos asociados a este cliente, ordenados por prioridad (de mayor a menor).
+        Retorna la lista de pedidos (objetos completos) asociados a este cliente, ordenados por prioridad (de mayor a menor).
         """
         prioridad_orden = {
             'emergencia': 6,

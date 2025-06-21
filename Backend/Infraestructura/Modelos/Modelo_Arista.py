@@ -1,5 +1,5 @@
 """
-Clase Arista para representar una conexión entre nodos en el grafo.
+Clase Arista para representar una conexión entre vertices en el grafo.
 Basado en Docs/edge.py
 """
 
@@ -78,4 +78,4 @@ class Arista:
         return f"Arista({self._origen} -> {self._destino}, peso={self._peso})"
 
     def __repr__(self):
-        return f"Arista({repr(self._origen)} -> {repr(self._destino)}, peso={self._peso})"
+        return self.__str__()

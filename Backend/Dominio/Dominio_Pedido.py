@@ -55,18 +55,49 @@ class Pedido:
         self.fecha_entrega = None
         logger.info(f"[Pedido.__init__] Pedido {id_pedido} creado con self.origen: {self.origen}, self.destino: {self.destino}, self.fecha_creacion: {self.fecha_creacion}")
 
+    def obtener_cliente(self):
+        """
+        Retorna el objeto cliente asociado a este pedido a través del vértice.
+        """
+        logger = logging.getLogger("Pedido")
+        cliente = self.cliente.elemento() if self.cliente and hasattr(self.cliente, 'elemento') else None
+        logger.info(f"[Pedido.obtener_cliente] Pedido {self.id_pedido} retorna cliente: {cliente}")
+        return cliente
+
+    def obtener_origen(self):
+        """
+        Retorna el vértice de origen (almacenamiento) asociado a este pedido.
+        Siempre retorna la referencia única del objeto Vertice.
+        """
+        logger = logging.getLogger("Pedido")
+        origen = self.origen.elemento() if self.origen and hasattr(self.origen, 'elemento') else None
+        logger.info(f"[Pedido.obtener_origen] Pedido {self.id_pedido} retorna origen: {origen}")
+        return self.origen
+
+    def obtener_destino(self):
+        """
+        Retorna el vértice de destino (cliente) asociado a este pedido.
+        Siempre retorna la referencia única del objeto Vertice.
+        """
+        logger = logging.getLogger("Pedido")
+        destino = self.destino.elemento() if self.destino and hasattr(self.destino, 'elemento') else None
+        logger.info(f"[Pedido.obtener_destino] Pedido {self.id_pedido} retorna destino: {destino}")
+        return self.destino
+
     def asignar_ruta(self, ruta, peso_total):
         logger = logging.getLogger("Pedido")
         logger.info(f"[Pedido.asignar_ruta] Pedido {self.id_pedido} asignando ruta: {ruta}, peso_total: {peso_total}")
         self.ruta = ruta
         self.peso_total = peso_total
         self.status = 'enviado'
+        logger.info(f"[Pedido.asignar_ruta] Pedido {self.id_pedido} status actualizado a: {self.status}")
 
     def marcar_entregado(self):
         logger = logging.getLogger("Pedido")
         logger.info(f"[Pedido.marcar_entregado] Pedido {self.id_pedido} marcado como entregado.")
         self.status = 'entregado'
         self.fecha_entrega = datetime.now()
+        logger.info(f"[Pedido.marcar_entregado] Pedido {self.id_pedido} fecha_entrega: {self.fecha_entrega}")
 
     def es_pendiente(self):
         logger = logging.getLogger("Pedido")
@@ -86,9 +117,14 @@ class Pedido:
     def validar_origen_destino(self, origen, destino):
         logger = logging.getLogger("Pedido")
         logger.info(f"[Pedido.validar_origen_destino] Pedido {self.id_pedido} origen: {origen}, destino: {destino}")
-        return (self.origen is origen and self.destino is destino) or \
+        resultado = (self.origen is origen and self.destino is destino) or \
                (getattr(self.origen.elemento(), 'id_almacenamiento', None) == getattr(origen.elemento(), 'id_almacenamiento', None) and
                 getattr(self.destino.elemento(), 'id_cliente', None) == getattr(destino.elemento(), 'id_cliente', None))
+        logger.info(f"[Pedido.validar_origen_destino] Pedido {self.id_pedido} resultado: {resultado}")
+        return resultado
 
     def __str__(self):
-        return f"Pedido {self.id_pedido} - Cliente: {self.cliente.elemento().nombre} - Estado: {self.status}"
+        logger = logging.getLogger("Pedido")
+        cliente_nombre = self.obtener_cliente().nombre if self.obtener_cliente() else 'N/A'
+        logger.info(f"[Pedido.__str__] Pedido {self.id_pedido} - Cliente: {cliente_nombre} - Estado: {self.status}")
+        return f"Pedido {self.id_pedido} - Cliente: {cliente_nombre} - Estado: {self.status}"

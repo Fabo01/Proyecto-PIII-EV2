@@ -59,5 +59,40 @@ class ISimulacionAplicacionService(ABC):
         pass
     
     @abstractmethod
-    def obtener_nodos(self) -> Any:
+    def obtener_vertices(self) -> Any:
+        pass
+    
+    @abstractmethod
+    def obtener_clientes_hashmap(self) -> dict:
+        """Retorna el hashmap de clientes (ID → Objeto Cliente)."""
+        pass
+
+    @abstractmethod
+    def obtener_pedidos_hashmap(self) -> dict:
+        """Retorna el hashmap de pedidos (ID → Objeto Pedido)."""
+        pass
+
+    @abstractmethod
+    def obtener_almacenamientos_hashmap(self) -> dict:
+        """Retorna el hashmap de almacenamientos (ID → Objeto Almacenamiento)."""
+        pass
+
+    @abstractmethod
+    def obtener_recargas_hashmap(self) -> dict:
+        """Retorna el hashmap de recargas (ID → Objeto Recarga)."""
+        pass
+
+    @abstractmethod
+    def obtener_vertices_hashmap(self) -> dict:
+        """Retorna el hashmap de vértices (ID → Objeto Vertice)."""
+        pass
+
+    @abstractmethod
+    def obtener_aristas_hashmap(self) -> dict:
+        """Retorna el hashmap de aristas (clave → Objeto Arista)."""
+        pass
+
+    @abstractmethod
+    def obtener_rutas_hashmap(self) -> dict:
+        """Retorna el hashmap de rutas (clave → Objeto Ruta)."""
         pass

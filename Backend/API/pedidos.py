@@ -1,6 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from Backend.Aplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
-from Backend.API.DTOs.Dtos1 import PedidoResponse, RutaResponse
+from fastapi import APIRouter, HTTPException, Depends
+from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
+from Backend.API.DTOs.DTOsRespuesta.RespuestaPedido import RespuestaPedido
+from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta
+from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
+from Backend.Infraestructura.Mapeadores.MapeadorPedido import MapeadorPedido
+from Backend.Infraestructura.Mapeadores.MapeadorRuta import MapeadorRuta
 from typing import List
 import logging
 
@@ -14,39 +18,86 @@ if not logger.hasHandlers():
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
-@router.get("/", response_model=List[PedidoResponse])
-def listar_pedidos():
+def get_simulacion_service():
+    return SimulacionAplicacionService
+
+@router.get("/", response_model=List[RespuestaPedido])
+def listar_pedidos(service=Depends(get_simulacion_service)):
+    # Inicio de auditoría y listado sobre objetos de dominio
     logger.info("GET /pedidos llamado")
-    pedidos = SimulacionAplicacionService.listar_pedidos()
-    logger.info(f"GET /pedidos retornó {len(pedidos)} pedidos")
-    if pedidos is None:
-        logger.warning("GET /pedidos: Simulación no iniciada")
+    try:
+        from Backend.Dominio.Simulacion_dominio import Simulacion
+        sim = Simulacion.obtener_instancia()
+    except Exception as e:
+        logger.error(f"GET /pedidos: simulación no iniciada o no accesible: {e}")
         raise HTTPException(status_code=400, detail="Simulación no iniciada")
-    if not pedidos:
-        logger.warning("GET /pedidos: No hay pedidos registrados")
-        raise HTTPException(status_code=404, detail="No hay pedidos registrados")
-    return pedidos
+    pedidos_raw = getattr(sim, 'pedidos', [])
+    logger.info(f"listar_pedidos: {len(pedidos_raw)} pedidos en dominio encontrados")
+    pedidos_validos = []
+    pedidos_descartados = []
+    # Auditoría de cada pedido de dominio
+    for pedido in pedidos_raw:
+        logger.info(f"Auditoría Pedido dominio: id={pedido.id_pedido}, atributos={vars(pedido)}")
+        origen_dom = pedido.obtener_origen()
+        destino_dom = pedido.obtener_destino()
+        logger.info(f"  Origen dominio: {origen_dom}, Destino dominio: {destino_dom}")
+        # Estado y metadatos
+        logger.info(f"  Estado dominio: status={pedido.status}, prioridad={pedido.prioridad}, fecha_creacion={pedido.fecha_creacion}, fecha_entrega={pedido.fecha_entrega}")
+        if origen_dom and destino_dom:
+            pedidos_validos.append(pedido)
+        else:
+            logger.warning(f"Pedido {pedido.id_pedido} descartado por origen/destino None: origen={origen_dom}, destino={destino_dom}")
+            pedidos_descartados.append(pedido)
+    if pedidos_descartados:
+        for pd in pedidos_descartados:
+            sim.registrar_error_pedido(id_pedido=pd.id_pedido,
+                                      motivo="Pedido incompleto origen/destino None",
+                                      datos=vars(pd))
+    if not pedidos_validos:
+        logger.warning("GET /pedidos: No hay pedidos completos registrados")
+        return []
+    # Serializar pedidos válidos
+    try:
+        resultados = [MapeadorPedido.a_dto(p) for p in pedidos_validos]
+        logger.info(f"GET /pedidos: {len(resultados)} pedidos serializados correctamente")
+        return resultados
+    except Exception as e:
+        logger.error(f"Error al mapear pedidos a DTO: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al mapear pedidos: {e}")
 
 @router.get("/errores", response_model=List[dict])
-def listar_errores_pedidos():
+def listar_errores_pedidos(service=Depends(get_simulacion_service)):
     logger.info("GET /pedidos/errores llamado")
     try:
-        errores = SimulacionAplicacionService.obtener_errores_pedidos()
-        logger.info(f"GET /pedidos/errores retornó {len(errores)} errores")
-        return errores or []
+        errores_raw = service.obtener_errores_pedidos()
+        logger.info(f"GET /pedidos/errores retornó {len(errores_raw) if errores_raw else 0} errores")
+        # Mapear errores a formato serializable
+        errores = []
+        for err in errores_raw or []:
+            cliente_obj = err.get('cliente')
+            almacen_obj = err.get('almacen')
+            errores.append({
+                'id_pedido': err.get('id_pedido'),
+                'error': err.get('error'),
+                'id_cliente': getattr(cliente_obj.elemento(), 'id_cliente', None) if cliente_obj else None,
+                'id_almacenamiento': getattr(almacen_obj.elemento(), 'id_almacenamiento', None) if almacen_obj else None,
+                'fecha': str(err.get('fecha')),
+                'prioridad': err.get('prioridad')
+            })
+        return errores
     except Exception as e:
         logger.error(f"GET /pedidos/errores error: {e}")
         raise HTTPException(status_code=400, detail="Simulación no iniciada o sin errores registrados")
 
-@router.post("/{id}/ruta", response_model=RutaResponse)
-def calcular_ruta_pedido(id: int, algoritmo: str = 'dijkstra'):
+@router.post("/{id}/ruta", response_model=RespuestaRuta)
+def calcular_ruta_pedido(id: int, algoritmo: str = 'dijkstra', service=Depends(get_simulacion_service)):
     logger.info(f"POST /pedidos/{id}/ruta llamado con algoritmo={algoritmo}")
     try:
-        ruta = SimulacionAplicacionService.calcular_ruta_pedido(id, algoritmo)
+        ruta = service.calcular_ruta_pedido(id, algoritmo)
         if ruta is None:
             logger.warning(f"POST /pedidos/{id}/ruta: Ruta no encontrada para el pedido")
             raise HTTPException(status_code=404, detail="Ruta no encontrada para el pedido")
-        return ruta
+        return MapeadorRuta.a_dto(ruta)
     except KeyError as e:
         logger.warning(f"POST /pedidos/{id}/ruta: Pedido no encontrado {e}")
         raise HTTPException(status_code=404, detail=str(e))
@@ -55,32 +106,45 @@ def calcular_ruta_pedido(id: int, algoritmo: str = 'dijkstra'):
         logger.error(f"POST /pedidos/{id}/ruta: Error inesperado: {mensaje}")
         if "No existe una ruta posible" in mensaje:
             raise HTTPException(status_code=422, detail=mensaje)
-        if "Algoritmo de ruta no soportado" in mensaje:
-            raise HTTPException(status_code=422, detail=mensaje)
         raise HTTPException(status_code=500, detail=mensaje)
 
-@router.get("/{id}", response_model=PedidoResponse)
+@router.get("/{id}", response_model=RespuestaPedido)
 def obtener_pedido(id: int):
-    logger.info(f"GET /pedidos/{id} llamado")
+    """
+    Devuelve un pedido por su id, usando el servicio y mapeador.
+    """
     try:
         pedido = SimulacionAplicacionService.obtener_pedido(id)
         if pedido is None:
-            logger.warning(f"GET /pedidos/{id}: Pedido no encontrado")
             raise HTTPException(status_code=404, detail="Pedido no encontrado")
-        return pedido
-    except Exception as e:
-        logger.error(f"GET /pedidos/{id}: Error inesperado: {e}")
+        return MapeadorPedido.a_dto(pedido)
+    except Exception:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
 
-@router.get("/en_almacen/{id_almacen}", response_model=List[PedidoResponse])
-def pedidos_en_almacen(id_almacen: int):
+@router.get("/en_almacen/{id_almacen}", response_model=List[RespuestaPedido])
+def pedidos_en_almacen(id_almacen: int, service=Depends(get_simulacion_service)):
     """
-    Devuelve todos los pedidos asociados a un almacenamiento específico.
+    Devuelve los pedidos cuyo almacenamiento de origen es el dado.
     """
-    pedidos = SimulacionAplicacionService.listar_pedidos()
-    pedidos_filtrados = [p for p in pedidos if getattr(p, 'id_almacenamiento', None) == id_almacen]
-    if not pedidos_filtrados:
-        raise HTTPException(status_code=404, detail="No hay pedidos en el almacenamiento indicado")
-    return pedidos_filtrados
+    pedidos = service.listar_pedidos()
+    pedidos_filtrados = []
+    for p in pedidos or []:
+        try:
+            origen = p.obtener_origen()
+        except Exception:
+            continue
+        if origen and getattr(origen, 'id_almacenamiento', None) == id_almacen:
+            pedidos_filtrados.append(p)
+    # Mapear a DTOs
+    return [MapeadorPedido.a_dto(p) for p in pedidos_filtrados]
+
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def obtener_pedidos_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de pedidos (ID → Objeto Pedido serializable).
+    """
+    hashmap = service.obtener_pedidos_hashmap()
+    hashmap_dto = {str(k): MapeadorPedido.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
 
 

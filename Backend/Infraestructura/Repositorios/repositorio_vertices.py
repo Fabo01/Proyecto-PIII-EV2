@@ -3,7 +3,7 @@ RepositorioVertices: Acceso centralizado y único a instancias de Vertice.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.Interfaces.IRepositorioVertices import IRepositorioVertices
+from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioVertices import IRepositorioVertices
 
 class RepositorioVertices(IRepositorioVertices):
     """
@@ -57,3 +57,9 @@ class RepositorioVertices(IRepositorioVertices):
         Limpia el repositorio, eliminando todos los vértices.
         """
         self._vertices.limpiar()
+
+    def obtener_hashmap(self):
+        """
+        Retorna el hashmap interno de vértices (ID → Objeto Vertice).
+        """
+        return dict(self._vertices.items())

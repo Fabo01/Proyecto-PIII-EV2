@@ -3,7 +3,7 @@ RepositorioRecargas: Acceso centralizado y único a instancias de Recarga.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.Interfaces.IRepositorioRecargas import IRepositorioRecargas
+from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioRecargas import IRepositorioRecargas
 
 class RepositorioRecargas(IRepositorioRecargas):
     """
@@ -55,3 +55,9 @@ class RepositorioRecargas(IRepositorioRecargas):
         Limpia el repositorio, eliminando todas las recargas.
         """
         self._recargas.limpiar()
+
+    def obtener_hashmap(self):
+        """
+        Retorna el hashmap interno de recargas (ID → Objeto Recarga).
+        """
+        return dict(self._recargas.items())

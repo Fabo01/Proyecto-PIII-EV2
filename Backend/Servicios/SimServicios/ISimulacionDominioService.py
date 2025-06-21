@@ -3,11 +3,11 @@ from typing import Any, List
 
 class ISimulacionDominioService(ABC):
     @abstractmethod
-    def iniciar_simulacion(self, n_nodos: int, m_aristas: int, n_pedidos: int) -> Any:
+    def iniciar_simulacion(self, n_vertices: int, m_aristas: int, n_pedidos: int) -> Any:
         pass
 
     @abstractmethod
-    def obtener_nodos(self) -> List[Any]:
+    def obtener_vertices(self) -> List[Any]:
         pass
 
     @abstractmethod

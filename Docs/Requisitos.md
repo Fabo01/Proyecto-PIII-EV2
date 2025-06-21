@@ -4,11 +4,11 @@ Como no existe una infraestructura aérea preexistente, el sistema debe ser dise
 
 Centros de distribución (Almacenamiento): Puntos donde los drones recogen paquetes.
 
-Estaciones de carga: Nodos estratégicos que los drones deben visitar para recargar si exceden su autonomía.
-Destinos de entrega (Clientes): Nodos dinámicos con prioridad asignada. Su ubicación y prioridad pueden variar.
+Estaciones de carga: vertices estratégicos que los drones deben visitar para recargar si exceden su autonomía.
+Destinos de entrega (Clientes): vertices dinámicos con prioridad asignada. Su ubicación y prioridad pueden variar.
 Rutas seguras: Las rutas deben ser viables considerando el consumo energético. Si el trayecto excede el límite de autonomía, se debe forzar la visita a estaciones de recarga.
-Registro de rutas: EI sistema debe registrar la frecuencia de uso de rutas y nodos, para análisis posterior.
-Selección de rutas: A partir del registro anterior se debe crear una heurística basada en frecuencia que permita reutilizar rutas recurrentes a nodos más visitados, esto permitirá replicar recorridos ya realizados.
+Registro de rutas: EI sistema debe registrar la frecuencia de uso de rutas y vertices, para análisis posterior.
+Selección de rutas: A partir del registro anterior se debe crear una heurística basada en frecuencia que permita reutilizar rutas recurrentes a vertices más visitados, esto permitirá replicar recorridos ya realizados.
 Rutas óptimas: El sistema debe calcular las rutas más óptimas considerando la autonomía de los drones y las estaciones de carga disponibles.
 Rutas que deben pasar por estaciones de carga: Si un destino está fuera del alcance de un drone, se debe forzar una parada en una estación de carga antes de continuar hacia el destino final.
 Registro de entregas: El sistema debe registrar cada entrega realizada, incluyendo el tiempo de entrega y la ruta utilizada.
@@ -18,8 +18,8 @@ Diseñar e implementar una simulación logística autónoma para drones, asegura
 Para esto se ha dispuesto un video en youtube a modo de guía: https://youtu.be/AXj14zeKqTl
 
 Parámetros de Simulación
-Cantidad máxima de nodos: hasta 150 
-Roles de nodos: 
+Cantidad máxima de vertices: hasta 150 
+Roles de vertices: 
 • Almacenamiento: 20%
 • Recarga: 20%
 • Cliente: 60%
@@ -29,24 +29,24 @@ Metas Funcionales
 
 1. Gestión dinámica de rutas
 Autonomía máxima del dron: 50 unidades de costo (suma de pesos de aristas)
-Si una ruta supera el límite de batería, se fuerza el paso por nodos de recarga.
+Si una ruta supera el límite de batería, se fuerza el paso por vertices de recarga.
 Crear rutas entre cualquier centro de almacenamiento y cliente.
 Considerar estaciones de recarga si la energía del dron no alcanza.
 Solo usar algoritmos BFS,DFS y Topological Sort para búsqueda de caminos.
 
 2. Simulación funcional
-Simulación inicial con 15 nodos, 20 aristas y 10 órdenes.
-Soporta hasta 150 nodos y 300 aristas y 500 órdenes como máximo.
+Simulación inicial con 15 vertices, 20 aristas y 10 órdenes.
+Soporta hasta 150 vertices y 300 aristas y 500 órdenes como máximo.
 Optimizar uso de memoria y estructura de datos (AVL, mapas, grafos).
 
 3. Análisis estadístico
 Registrar cada ruta usada en un AVL.
 Determinar las rutas más utilizadas.
-Registrar frecuencia de nodos destino y origen.
+Registrar frecuencia de vertices destino y origen.
 
 4. Garantía de conectividad
 Todos los grafos generados son conexos.
-Se evita la generación de nodos aislados.
+Se evita la generación de vertices aislados.
 
 5. Visualización y Dashboard
 La interfaz principal se desarrolla mediante Streamlit (Recomendado), y permite visualizar y operar el sistema en 5 pestañas organizadas funcionalmente. A continuación, se describe cada una:
@@ -55,15 +55,15 @@ Pestaña 1: Ejecutar Simulación
 Propósito: Permitir la configuración e inicio de la simulación con parámetros personalizables.
 
 Componentes:
-• Slider: número de nodos (n_nodos, entre 10 y 150).
+• Slider: número de vertices (n_vertices, entre 10 y 150).
 • Slider: número de aristas (m_aristas, entre 10 y 300).
 • Slider: número de órdenes (n_pedidos, entre 10 y 300).
-• Campo informativo: Texto informativo indicando la cantidad de Nodos cliente, almacenamiento, abastecimiento y su porcentaje.
+• Campo informativo: Texto informativo indicando la cantidad de vertices cliente, almacenamiento, abastecimiento y su porcentaje.
 • Botón: Start Simulation (Inicia la simulación)
 
 Validaciones:
-• El número de aristas debe permitir un grafo conexo (n_nodos - 1)
-• El valor de nodos no debe superar 150.
+• El número de aristas debe permitir un grafo conexo (n_vertices - 1)
+• El valor de vertices no debe superar 150.
 • Si se hace clic sin modificar parámetros, se mantiene la configuración por defecto (ítem de componentes).
 
 Interacciones esperadas:
@@ -77,20 +77,20 @@ Esta pestaña sirve como punto de entrada para validar la generación del entorn
 conectividad y escalabilidad. (Manejo de parámetros)
 
 Pestaña 2: Explorar Red
-Propósito: Visualizar la red de transporte y calcular rutas entre nodos, considerando recarga por batería.
+Propósito: Visualizar la red de transporte y calcular rutas entre vertices, considerando recarga por batería.
 
 Componentes:
-• Gráfico: red de nodos coloreados por tipo (matplotlib)
-• Selectbox: nodo origen
-• Selectbox: nodo destino
-• Calculate Route (Calculará la ruta entre 2 nodos)
-• TextBox: muestra un mensaje de la ruta encontrada (lista de nodos + costo, ejemplo : Path: W -> I -> R -> I Costo: 25)
+• Gráfico: red de vertices coloreados por tipo (matplotlib)
+• Selectbox: vertice origen
+• Selectbox: vertice destino
+• Calculate Route (Calculará la ruta entre 2 vertices)
+• TextBox: muestra un mensaje de la ruta encontrada (lista de vertices + costo, ejemplo : Path: W -> I -> R -> I Costo: 25)
     • Luego de calcular una ruta debe dar la opción de completar la ruta Completar Delivery y Crear Pedido
-• Leyenda: colores según tipo de nodo
+• Leyenda: colores según tipo de vertice
 
 Validaciones:
-• Ambos nodos deben existir en el grafo.
-• Si no hay ruta posible con la bateria actual, se busca obligatoriamente una alternativa que pase por nodos de recarga.
+• Ambos vertices deben existir en el grafo.
+• Si no hay ruta posible con la bateria actual, se busca obligatoriamente una alternativa que pase por vertices de recarga.
 
 Interacciones esperadas:
 • El grafo muestra rutas visualmente en color rojo.
@@ -98,7 +98,7 @@ Interacciones esperadas:
 • Se muestra el camino recorrido y el costo.
 
 * Nota docente:
-Evaluar la integracion entre logica (bateria, nodos) y visualizacion. Es una parte central de la evaluacion funcional.
+Evaluar la integracion entre logica (bateria, vertices) y visualizacion. Es una parte central de la evaluacion funcional.
 
 Pestaña 3: Clientes y pedidos
 Propósito: Listar los clientes activos y los pedidos generados, mostrando atributos relevantes.
@@ -139,8 +139,8 @@ Pestaña 5: Estadísticas generales
 Propósito: Entregar una vista global del sistema en funcionamiento, con gráficas visuales.
 
 Componentes:
-• Gráfico de barras: comparación entre número de nodos clientes más visitados, nodos almacenamiento más visitados y nodos de abastecimiento más visitados.
-• Gráfico de torta: proporción entre nodos por rol.
+• Gráfico de barras: comparación entre número de vertices clientes más visitados, vertices almacenamiento más visitados y vertices de abastecimiento más visitados.
+• Gráfico de torta: proporción entre vertices por rol.
 
 Validaciones:
 • Se requiere simulación activa para mostrar los datos.
@@ -150,7 +150,7 @@ Interacciones esperadas:
 
 Estructura de Clases y Módulos sugerida
 Clase / Módulo	         //                Función                             //        Ubicación
-Graph, Vertex, Edge	     //       Modela el grafo base (nodos, conexiones)     //       model/
+Graph, Vertex, Edge	     //       Modela el grafo base (vertices, conexiones)     //       model/
 Simulation	             //        Controlador principal de la simulación      //       sim/
 Simulationlnitializer	 //       Generación de grafos conectados y roles      //       sim/
 Route, Order, Client	 //       Representan las entidades del sistema        //       domain/

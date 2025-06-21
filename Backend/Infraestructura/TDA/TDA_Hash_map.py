@@ -67,16 +67,16 @@ class HashMap:
         self._datos.clear()
 
     def claves(self):
-        return self._datos.keys()
+        return list(self._datos.keys())
 
     def valores(self):
-        return self._datos.values()
+        return list(self._datos.values())
 
     def items(self):
-        return self._datos.items()
+        return list(self._datos.items())
 
     def actualizar(self, otro):
-        self._datos.update(otro)
+        self._datos.update(otro._datos if isinstance(otro, HashMap) else otro)
 
     def __eq__(self, otro):
         if not isinstance(otro, HashMap):

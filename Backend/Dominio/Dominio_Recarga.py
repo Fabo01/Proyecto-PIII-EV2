@@ -5,6 +5,7 @@ Clase Recarga para representar una estación de recarga en la simulación logís
 class Recarga:
     """
     Representa una estación de recarga en la red de drones.
+    Puede ser referenciada por un vértice para mantener la posición.
     """
     def __init__(self, id_recarga, nombre):
         self.id_recarga = id_recarga

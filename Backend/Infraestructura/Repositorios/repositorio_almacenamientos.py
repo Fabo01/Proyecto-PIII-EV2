@@ -3,7 +3,7 @@ RepositorioAlmacenamientos: Acceso centralizado y único a instancias de Almacen
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.Interfaces.IRepositorioAlmacenamientos import IRepositorioAlmacenamientos
+from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioAlmacenamientos import IRepositorioAlmacenamientos
 
 class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
     """
@@ -55,3 +55,9 @@ class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
         Limpia el repositorio, eliminando todas las instancias de almacenamiento.
         """
         self._almacenamientos.limpiar()
+
+    def obtener_hashmap(self):
+        """
+        Retorna el hashmap interno de almacenamientos (ID → Objeto Almacenamiento).
+        """
+        return dict(self._almacenamientos.items())

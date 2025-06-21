@@ -3,7 +3,7 @@ RepositorioAristas: Acceso centralizado y único a instancias de Arista.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.Interfaces.IRepositorioAristas import IRepositorioAristas
+from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioAristas import IRepositorioAristas
 
 class RepositorioAristas(IRepositorioAristas):
     """
@@ -35,3 +35,9 @@ class RepositorioAristas(IRepositorioAristas):
 
     def limpiar(self):
         self._aristas.limpiar()
+
+    def obtener_hashmap(self):
+        """
+        Retorna el hashmap interno de aristas (clave → Objeto Arista).
+        """
+        return dict(self._aristas.items())

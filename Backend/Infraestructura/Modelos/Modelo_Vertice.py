@@ -1,11 +1,11 @@
 """
-Clase Vertice para representar un nodo en el grafo.
+Clase Vertice para representar un vertice en el grafo.
 Basado en Docs/vertex.py
 """
 
 class Vertice:
     """
-    Representa un vértice (nodo) en el grafo. Solo almacena el elemento asociado (Cliente, Almacenamiento o Recarga).
+    Representa un vértice (vertice) en el grafo. Solo almacena el elemento asociado (Cliente, Almacenamiento o Recarga).
     No contiene lógica de cliente, pedido ni almacenamiento.
     """
     __slots__ = ['_elemento']
@@ -61,6 +61,7 @@ class Vertice:
         """
         Retorna el id único del elemento asociado (id_cliente, id_almacenamiento, id_recarga).
         """
+        # Busca el atributo id_* en el elemento
         for attr in ['id_cliente', 'id_almacenamiento', 'id_recarga']:
             if hasattr(self._elemento, attr):
                 return getattr(self._elemento, attr)
