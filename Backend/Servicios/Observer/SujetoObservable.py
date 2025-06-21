@@ -1,7 +1,7 @@
 """
 Implementación base de Sujeto Observable para el patrón observer.
 """
-from Backend.Servicios.Observer.ISujeto import ISujeto
+from Backend.Dominio.Interfaces.IntObs.ISujeto import ISujeto
 
 class SujetoObservable(ISujeto):
     def __init__(self):

@@ -2,12 +2,12 @@
 Clase Grafo para modelar el grafo base de la red de drones.
 Basado en Docs/graph.py y plan de mejora 4.4 (unicidad de instancias).
 """
-from Backend.Infraestructura.Modelos.Dominio_Vertice import Vertice
-from Backend.Infraestructura.Modelos.Dominio_Arista import Arista
+from Backend.Infraestructura.TDA.TDA_Vertice import Vertice
+from Backend.Infraestructura.TDA.TDA_Arista import Arista
 from Backend.Infraestructura.Repositorios.repositorio_vertices import RepositorioVertices
 from Backend.Infraestructura.Repositorios.repositorio_aristas import RepositorioAristas
-from Backend.Servicios.EntFabricas.FabricaVertices import FabricaVertices
-from Backend.Servicios.EntFabricas.FabricaAristas import FabricaAristas
+from Backend.Dominio.EntFabricas.FabricaVertices import FabricaVertices
+from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
 
 class Grafo:
     """

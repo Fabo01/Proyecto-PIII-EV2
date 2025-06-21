@@ -18,7 +18,6 @@ from Backend.API.pedidos_enrutador import router as pedidos_router
 from Backend.API.estadisticas_enrutador import router as estadisticas_router
 from Backend.API.clientes_enrutador import router as clientes_router
 from Backend.API.almacenamientos_enrutador import router as almacenamientos_router
-from Backend.API.rutas_algoritmos_enrutador import router as rutas_algoritmos_router
 from Backend.API.aristas_enrutador import router as aristas_router
 from Backend.API.vertices_enrutador import router as vertices_router
 
@@ -43,6 +42,5 @@ app.include_router(pedidos_router)
 app.include_router(estadisticas_router)
 app.include_router(clientes_router)
 app.include_router(almacenamientos_router)
-app.include_router(rutas_algoritmos_router)
 app.include_router(aristas_router)
 app.include_router(vertices_router)

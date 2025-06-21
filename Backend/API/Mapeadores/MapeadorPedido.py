@@ -3,8 +3,8 @@ MapeadorPedido: Convierte entre modelo de dominio Pedido y PedidoResponse DTO.
 """
 from Backend.Dominio.Dominio_Pedido import Pedido
 from Backend.API.DTOs.DTOsRespuesta.RespuestaPedido import RespuestaPedido
-from Backend.Infraestructura.Mapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
-from Backend.Infraestructura.Mapeadores.MapeadorRuta import MapeadorRuta
+from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaVertice import RespuestaVertice
 
 class MapeadorPedido(IMapeadorDominioDTO):
@@ -24,7 +24,7 @@ class MapeadorPedido(IMapeadorDominioDTO):
         """
         # Importaciones locales para evitar ciclo
         if incluir_cliente:
-            from Backend.Infraestructura.Mapeadores.MapeadorCliente import MapeadorCliente
+            from Backend.API.Mapeadores.MapeadorCliente import MapeadorCliente
 
         cliente_dto = None
         if incluir_cliente and hasattr(pedido, 'obtener_cliente'):

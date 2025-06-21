@@ -1,9 +1,9 @@
 """
 MapeadorArista: Convierte entre modelo de dominio Arista y BaseArista DTO.
 """
-from Backend.Infraestructura.Modelos.Dominio_Arista import Arista
+from Backend.Infraestructura.TDA.TDA_Arista import Arista
 from Backend.API.DTOs.BaseArista import BaseArista
-from Backend.Infraestructura.Mapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
 
 class MapeadorArista(IMapeadorDominioDTO):
     """

@@ -3,7 +3,7 @@ from typing import List
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRecarga import RespuestaRecarga
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
-from Backend.Infraestructura.Mapeadores.MapeadorRecarga import MapeadorRecarga
+from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
 
 router = APIRouter(prefix="/recargas", tags=["Recargas"])
 

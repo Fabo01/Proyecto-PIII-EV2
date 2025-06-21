@@ -1,7 +1,7 @@
 """
 Estrategia de ruta usando Floyd-Warshall (para todos los pares, pero aquí solo reconstruye una ruta).
 """
-from Backend.Aplicacion.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
+from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
 import logging
 
 class RutaEstrategiaFloydWarshall(IRutaEstrategia):

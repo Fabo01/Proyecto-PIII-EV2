@@ -4,8 +4,8 @@ Garantiza unicidad y registro de errores.
 Utiliza FabricaVertices y FabricaAristas para componentes internos.
 """
 from Backend.Dominio.Dominio_Ruta import Ruta
-from Backend.Servicios.EntFabricas.FabricaVertices import FabricaVertices
-from Backend.Servicios.EntFabricas.FabricaAristas import FabricaAristas
+from Backend.Dominio.EntFabricas.FabricaVertices import FabricaVertices
+from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
 import logging
 from Backend.Dominio.Interfaces.IntFab.FabricaInterfaz import FabricaInterfaz
 

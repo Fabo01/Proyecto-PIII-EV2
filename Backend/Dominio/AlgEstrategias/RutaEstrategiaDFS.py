@@ -1,7 +1,7 @@
 """
 Estrategia de ruta usando DFS.
 """
-from Backend.Aplicacion.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
+from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
 import logging
 
 class RutaEstrategiaDFS(IRutaEstrategia):

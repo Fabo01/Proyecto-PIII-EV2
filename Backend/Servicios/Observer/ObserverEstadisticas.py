@@ -1,7 +1,7 @@
 """
 Observer concreto para actualizar estadísticas en tiempo real.
 """
-from Backend.Servicios.Observer.IObserver import IObserver
+from Backend.Dominio.Interfaces.IntObs.IObserver import IObserver
 
 class ObserverEstadisticas(IObserver):
     def __init__(self, servicio_estadisticas):

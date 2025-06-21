@@ -3,7 +3,7 @@ RepositorioAlmacenamientos: Acceso centralizado y único a instancias de Almacen
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioAlmacenamientos import IRepositorioAlmacenamientos
+from Backend.Dominio.Interfaces.IntRepos.IRepositorioAlmacenamientos import IRepositorioAlmacenamientos
 
 class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
     """

@@ -2,7 +2,7 @@
 Estrategia de árbol de expansión mínima usando Kruskal.
 Retorna el árbol de expansión mínima como lista de aristas y el peso total.
 """
-from Backend.Aplicacion.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
+from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
 import logging
 
 class RutaEstrategiaKruskal(IRutaEstrategia):

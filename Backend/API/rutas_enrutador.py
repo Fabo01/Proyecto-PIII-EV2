@@ -3,7 +3,7 @@ from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionApl
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaFloydWarshall import RespuestaFloydWarshall
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
-from Backend.Infraestructura.Mapeadores.MapeadorRuta import MapeadorRuta
+from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 from typing import List
 import logging
 
@@ -215,7 +215,7 @@ def obtener_rutas_hashmap(service=Depends(get_simulacion_service)):
     logger.info("GET /rutas/hashmap llamado")
     try:
         hashmap = service.obtener_rutas_hashmap()
-        from Backend.Infraestructura.Mapeadores.MapeadorRuta import MapeadorRuta
+        from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
         hashmap_dto = {str(k): MapeadorRuta.a_dto(v).model_dump() for k, v in hashmap.items()}
         logger.info(f"GET /rutas/hashmap: {len(hashmap_dto)} rutas en el hashmap")
         return RespuestaHashMap(hashmap=hashmap_dto)

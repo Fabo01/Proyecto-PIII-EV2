@@ -3,7 +3,7 @@ RepositorioRecargas: Acceso centralizado y único a instancias de Recarga.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioRecargas import IRepositorioRecargas
+from Backend.Dominio.Interfaces.IntRepos.IRepositorioRecargas import IRepositorioRecargas
 
 class RepositorioRecargas(IRepositorioRecargas):
     """

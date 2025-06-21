@@ -105,3 +105,100 @@ class Simulacion:
     #     pedido = self._repo_pedidos.crear(datos_pedido)
     #     self._repo_clientes.asociar_pedido(pedido.id, pedido)
     #     return pedido
+
+    def iniciar_simulacion(self, n_vertices: int, m_aristas: int, n_pedidos: int):
+        """
+        Inicializa la simulación: genera vértices, aristas y pedidos siguiendo los requisitos.
+        """
+        # Limpiar repositorios
+        self.repo_vertices.limpiar()
+        self.repo_aristas.limpiar()
+        self.repo_clientes.limpiar()
+        self.repo_almacenamientos.limpiar()
+        self.repo_recargas.limpiar()
+        self.repo_pedidos.limpiar()
+        self.repo_rutas.limpiar()
+        # Generación de vértices con proporciones: 20% almacenamiento, 20% recarga, 60% clientes
+        from Backend.Dominio.EntFabricas.FabricaAlmacenamientos import FabricaAlmacenamientos
+        from Backend.Dominio.EntFabricas.FabricaRecargas import FabricaRecargas
+        from Backend.Dominio.EntFabricas.FabricaClientes import FabricaClientes
+        fa = FabricaAlmacenamientos()
+        fr = FabricaRecargas()
+        fc = FabricaClientes()
+        n_alm = max(1, int(n_vertices * 0.2))
+        n_rec = max(1, int(n_vertices * 0.2))
+        n_cli = n_vertices - n_alm - n_rec
+        for i in range(n_alm): fa.crear(i+1, f"Almacen {i+1}")
+        for i in range(n_rec): fr.crear(i+1, f"Recarga {i+1}")
+        for i in range(n_cli): fc.crear(i+1, f"Cliente {i+1}")
+        # Generar aristas asegurando conectividad y aleatoriedad
+        import random
+        all_vertices = list(self.repo_vertices.todos())
+        # Conexión en cadena mínima
+        for u, v in zip(all_vertices, all_vertices[1:]):
+            peso = random.uniform(1, 10)
+            from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
+            fae = FabricaAristas()
+            fae.crear(u, v, peso)
+        # Aristas adicionales hasta m_aristas
+        existentes = len(all_vertices) - 1
+        posibles = [(u, v) for u in all_vertices for v in all_vertices if u != v]
+        while existentes < m_aristas and posibles:
+            u, v = random.choice(posibles)
+            posibles.remove((u, v))
+            peso = random.uniform(1, 10)
+            fae.crear(u, v, peso)
+            existentes += 1
+        # Generar pedidos entre almacenamientos y clientes
+        from Backend.Dominio.EntFabricas.FabricaPedidos import FabricaPedidos
+        fp = FabricaPedidos()
+        almacenes = list(self.repo_almacenamientos.todos())
+        clientes = list(self.repo_clientes.todos())
+        prioridades = ['alta', 'media', 'baja']
+        for j in range(1, n_pedidos + 1):
+            origen = random.choice(almacenes)
+            destino = random.choice(clientes)
+            prioridad = random.choice(prioridades)
+            pedido = fp.crear(j, origen, destino, prioridad)
+            # Asociar pedido a cliente y almacen
+            cliente_elem = self.repo_clientes.obtener(destino.id_cliente)
+            almacen_elem = self.repo_almacenamientos.obtener(origen.id_almacenamiento)
+            cliente_elem.agregar_pedido(pedido)
+            almacen_elem.agregar_pedido(pedido)
+        return None
+
+    def obtener_vertices(self):
+        return list(self.repo_vertices.todos())
+
+    def obtener_aristas(self):
+        return list(self.repo_aristas.todos())
+
+    def obtener_clientes(self):
+        return list(self.repo_clientes.todos())
+
+    def obtener_almacenamientos(self):
+        return list(self.repo_almacenamientos.todos())
+
+    def obtener_recargas(self):
+        return list(self.repo_recargas.todos())
+
+    def obtener_pedidos(self):
+        return list(self.repo_pedidos.todos())
+
+    def calcular_ruta_pedido(self, id_pedido: int, algoritmo: str = 'BFS'):
+        # Buscar pedido y delegar cálculo de ruta según algoritmo
+        pedido = self.repo_pedidos.obtener(id_pedido)
+        # Aquí se debería invocar la estrategia concreta (vía fábrica o repositorio de rutas)
+        raise NotImplementedError("Lógica de cálculo de ruta no implementada en dominio")
+
+    def marcar_pedido_entregado(self, id_pedido: int):
+        pedido = self.repo_pedidos.obtener(id_pedido)
+        pedido.marcar_entregado()
+        self.repo_pedidos.agregar(pedido)
+
+    def buscar_pedido(self, id_pedido: int):
+        return self.repo_pedidos.obtener(id_pedido)
+
+    def obtener_rutas_mas_frecuentes(self, top: int = 5):
+        # Delegar al repositorio de rutas (asumiendo persistencia de frecuencias)
+        return list(self.repo_rutas.todos())[:top]

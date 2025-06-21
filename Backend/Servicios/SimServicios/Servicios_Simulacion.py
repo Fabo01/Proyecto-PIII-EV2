@@ -1,4 +1,4 @@
-from Backend.Dominio.Interfaces.ISimulacionDominioService import ISimulacionDominioService
+from Backend.Dominio.Interfaces.IntSim.ISimulacionDominioService import ISimulacionDominioService
 from Backend.Dominio.Simulacion_dominio import Simulacion
 
 class SimulacionDominioService(ISimulacionDominioService):
@@ -15,6 +15,11 @@ class SimulacionDominioService(ISimulacionDominioService):
         # Ejemplo: poblar repositorios de vértices y aristas
         self._sim.repo_vertices.limpiar()
         self._sim.repo_aristas.limpiar()
+        self._sim.repo_clientes.limpiar()
+        self._sim.repo_almacenamientos.limpiar()
+        self._sim.repo_recargas.limpiar()
+        self._sim.repo_pedidos.limpiar()
+        self._sim.repo_rutas.limpiar()
         # ... lógica para generar vértices y aristas usando repositorios ...
         # generar pedidos a través de repo_pedidos ...
 
@@ -50,6 +55,26 @@ class SimulacionDominioService(ISimulacionDominioService):
 
     def buscar_pedido(self, id_pedido: int):
         return self._sim.repo_pedidos.obtener(id_pedido)
+    
+    def obtener_cliente(self, id_cliente: int):
+        """Obtiene un cliente específico del repositorio."""
+        return self._sim.repo_clientes.obtener(id_cliente)
+
+    def obtener_almacenamiento(self, id_almacenamiento: int):
+        """Obtiene un almacenamiento específico del repositorio."""
+        return self._sim.repo_almacenamientos.obtener(id_almacenamiento)
+
+    def obtener_recarga(self, id_recarga: int):
+        """Obtiene una recarga específica del repositorio."""
+        return self._sim.repo_recargas.obtener(id_recarga)
+
+    def obtener_pedido(self, id_pedido: int):
+        """Obtiene un pedido específico del repositorio."""
+        return self._sim.repo_pedidos.obtener(id_pedido)
+
+    def obtener_ruta(self, id_ruta: int):
+        """Obtiene una ruta específica del repositorio."""
+        return self._sim.repo_rutas.obtener(id_ruta)
 
     def obtener_rutas_mas_frecuentes(self, top: int = 5):
         # Suponiendo repositorio de rutas almacena frecuencias
@@ -75,4 +100,15 @@ class SimulacionDominioService(ISimulacionDominioService):
 
     def obtener_pedidos_hashmap(self):
         return self._sim.repo_pedidos.obtener_hashmap()
+
+    def obtener_estadisticas(self):
+        """Calcula estadísticas básicas de la simulación."""
+        rutas_freq = self.obtener_rutas_mas_frecuentes()
+        # Placeholder para vertices más visitados; se puede extender según necesidad
+        vertices_visitados = {}
+        return {
+            "rutas_mas_frecuentes": rutas_freq,
+            "vertices_mas_visitados": vertices_visitados,
+            "tiempo_respuesta": 0.0
+        }
 

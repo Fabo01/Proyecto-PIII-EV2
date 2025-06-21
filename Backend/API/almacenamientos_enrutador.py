@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
 from Backend.API.DTOs.DTOsRespuesta.RespuestaAlmacenamiento import RespuestaAlmacenamiento
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
-from Backend.Infraestructura.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
+from Backend.API.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
 from typing import List
 
 router = APIRouter(prefix="/almacenamientos", tags=["Almacenamientos"])

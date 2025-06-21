@@ -3,7 +3,7 @@ RepositorioClientes: Acceso centralizado y único a instancias de Cliente.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioClientes import IRepositorioClientes
+from Backend.Dominio.Interfaces.IntRepos.IRepositorioClientes import IRepositorioClientes
 
 class RepositorioClientes(IRepositorioClientes):
     """

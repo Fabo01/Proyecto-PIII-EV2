@@ -4,7 +4,7 @@ MapeadorRuta: Convierte entre modelo de dominio Ruta y RutaResponse DTO.
 from Backend.Dominio.Dominio_Ruta import Ruta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaVertice import RespuestaVertice
-from Backend.Infraestructura.Mapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
 import logging
 
 class MapeadorRuta(IMapeadorDominioDTO):

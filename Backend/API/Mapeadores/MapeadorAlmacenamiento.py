@@ -3,8 +3,8 @@ MapeadorAlmacenamiento: Convierte entre modelo de dominio Almacenamiento y Almac
 """
 from Backend.Dominio.Dominio_Almacenamiento import Almacenamiento
 from Backend.API.DTOs.DTOsRespuesta.RespuestaAlmacenamiento import RespuestaAlmacenamiento
-from Backend.Infraestructura.Mapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
-from Backend.Infraestructura.Mapeadores.MapeadorPedido import MapeadorPedido
+from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
 
 class MapeadorAlmacenamiento(IMapeadorDominioDTO):
     """

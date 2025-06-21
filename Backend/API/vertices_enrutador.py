@@ -2,10 +2,10 @@ from fastapi import APIRouter, HTTPException, Depends
 from Backend.Infraestructura.Repositorios.repositorio_vertices import RepositorioVertices
 from Backend.API.DTOs.DTOsRespuesta.RespuestaVertice import RespuestaVertice
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
-from Backend.Infraestructura.Mapeadores.MapeadorCliente import MapeadorCliente
-from Backend.Infraestructura.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
-from Backend.Infraestructura.Mapeadores.MapeadorRecarga import MapeadorRecarga
-from Backend.Infraestructura.Mapeadores.MapeadorVertice import MapeadorVertice
+from Backend.API.Mapeadores.MapeadorCliente import MapeadorCliente
+from Backend.API.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
+from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
+from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
 from typing import List
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
 
@@ -46,6 +46,6 @@ def obtener_vertices_hashmap(service=Depends(get_simulacion_service)):
     Devuelve el hashmap de vértices (ID → Objeto Vertice serializable).
     """
     hashmap = service.obtener_vertices_hashmap()
-    from Backend.Infraestructura.Mapeadores.MapeadorVertice import MapeadorVertice
+    from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
     hashmap_dto = {str(k): MapeadorVertice.a_dto(v).model_dump() for k, v in hashmap.items()}
     return RespuestaHashMap(hashmap=hashmap_dto)

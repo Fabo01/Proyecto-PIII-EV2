@@ -1,4 +1,4 @@
-from Backend.Infraestructura.Modelos.Dominio_Vertice import Vertice
+from Backend.Infraestructura.TDA.TDA_Vertice import Vertice
 from Backend.API.DTOs.DTOsRespuesta.RespuestaVertice import RespuestaVertice
 
 class MapeadorVertice:

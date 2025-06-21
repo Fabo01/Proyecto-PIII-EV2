@@ -3,7 +3,7 @@ RepositorioRutas: Acceso centralizado y único a instancias de Ruta.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioRutas import IRepositorioRutas
+from Backend.Dominio.Interfaces.IntRepos.IRepositorioRutas import IRepositorioRutas
 import logging
 
 class RepositorioRutas(IRepositorioRutas):

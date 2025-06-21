@@ -3,8 +3,8 @@ from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionApl
 from Backend.API.DTOs.DTOsRespuesta.RespuestaPedido import RespuestaPedido
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
-from Backend.Infraestructura.Mapeadores.MapeadorPedido import MapeadorPedido
-from Backend.Infraestructura.Mapeadores.MapeadorRuta import MapeadorRuta
+from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
+from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 from typing import List
 import logging
 

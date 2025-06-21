@@ -3,7 +3,7 @@ RepositorioVertices: Acceso centralizado y único a instancias de Vertice.
 Utiliza HashMap para acceso O(1) y garantiza instanciación única.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Infraestructura.Repositorios.RepoInterfaces.IRepositorioVertices import IRepositorioVertices
+from Backend.Dominio.Interfaces.IntRepos.IRepositorioVertices import IRepositorioVertices
 
 class RepositorioVertices(IRepositorioVertices):
     """

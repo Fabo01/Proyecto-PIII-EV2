@@ -4,8 +4,8 @@ from Backend.API.DTOs.DTOsRespuesta.RespuestaCliente import RespuestaCliente
 from Backend.API.DTOs.DTOsRespuesta.RespuestaPedido import RespuestaPedido
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
-from Backend.Infraestructura.Mapeadores.MapeadorCliente import MapeadorCliente
-from Backend.Infraestructura.Mapeadores.MapeadorPedido import MapeadorPedido
+from Backend.API.Mapeadores.MapeadorCliente import MapeadorCliente
+from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
 
 router = APIRouter(prefix="/clientes", tags=["Clientes"])
 

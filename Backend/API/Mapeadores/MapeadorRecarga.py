@@ -3,7 +3,7 @@ MapeadorRecarga: Convierte entre modelo de dominio Recarga y RecargaResponse DTO
 """
 from Backend.Dominio.Dominio_Recarga import Recarga
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRecarga import RespuestaRecarga
-from Backend.Infraestructura.Mapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
 
 class MapeadorRecarga(IMapeadorDominioDTO):
     """

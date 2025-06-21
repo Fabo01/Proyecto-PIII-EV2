@@ -1,7 +1,7 @@
 """
 Estrategia de ruta usando BFS.
 """
-from Backend.Aplicacion.AlgEstrategias.IRutaEstrategia import IRutaEstrategia
+from Backend.Dominio.Interfaces.IntEstr.IRutaEstrategia import IRutaEstrategia
 from collections import deque
 import logging
 
