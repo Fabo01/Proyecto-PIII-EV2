@@ -27,8 +27,8 @@ class FabricaAristas(FabricaInterfaz):
         Crea una arista entre dos vértices y la registra en el repositorio si no existe.
         """
         clave = (
-            getattr(origen.elemento(), 'id_cliente', None) or getattr(origen.elemento(), 'id_almacenamiento', None) or getattr(origen.elemento(), 'id_recarga', None),
-            getattr(destino.elemento(), 'id_cliente', None) or getattr(destino.elemento(), 'id_almacenamiento', None) or getattr(destino.elemento(), 'id_recarga', None)
+            getattr(origen.elemento, 'id_cliente', None) or getattr(origen.elemento, 'id_almacenamiento', None) or getattr(origen.elemento, 'id_recarga', None),
+            getattr(destino.elemento, 'id_cliente', None) or getattr(destino.elemento, 'id_almacenamiento', None) or getattr(destino.elemento, 'id_recarga', None)
         )
         repo = RepositorioAristas()
         existente = repo.obtener(clave)

@@ -24,7 +24,7 @@ class Cliente:
         Agrega un observador para recibir notificaciones de eventos de negocio.
         """
         self._observadores.add(observador)
-
+        
     def quitar_observador(self, observador):
         """
         Quita un observador, dejando de notificarle sobre eventos futuros.

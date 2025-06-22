@@ -22,6 +22,17 @@ def listar_pedidos(service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=404, detail="No hay pedidos registrados")
     return [MapeadorPedido.a_dto(p) for p in pedidos]
 
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def pedidos_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de pedidos (ID → Objeto Pedido serializable).
+    """
+    hashmap = service.obtener_pedidos_hashmap()
+    if hashmap is None:
+        raise HTTPException(status_code=404, detail="No hay pedidos en el sistema")
+    hashmap_dto = {str(k): MapeadorPedido.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
+
 @router.get("/{id}", response_model=RespuestaPedido)
 def obtener_pedido(id: int, service=Depends(get_simulacion_service)):
     """
@@ -94,15 +105,5 @@ def pedidos_en_almacen(id_almacen: int, service=Depends(get_simulacion_service))
     if pedidos is None:
         raise HTTPException(status_code=404, detail="No hay pedidos en el almacenamiento especificado")
     return [MapeadorPedido.a_dto(p) for p in pedidos]
-
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def pedidos_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de pedidos (ID → Objeto Pedido serializable).
-    """
-    hashmap = service.obtener_pedidos_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay pedidos en el sistema")
-    return RespuestaHashMap(hashmap=hashmap)
 
 

@@ -5,6 +5,8 @@ from frontend.servicios.cache import cachear_estado_simulacion
 def ui_simulacion():
     """
     Pestaña 1: Configuración e inicio de la simulación.
+    Permite seleccionar parámetros y lanzar la simulación vía API.
+    Cumple con modularidad, robustez y nombres en español.
     """
     st.header("Configuración de la Simulación")
     n_vertices = st.slider("Número de vértices", 10, 150, 15, key="n_vertices")

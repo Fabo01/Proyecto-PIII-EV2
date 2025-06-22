@@ -39,24 +39,21 @@ class Pedido:
         """
         Retorna el cliente asociado a este pedido.
         """
-        cliente = self.cliente.elemento() if self.cliente and hasattr(self.cliente, 'elemento') else None
-        return cliente
+        return self.cliente.elemento if self.cliente and hasattr(self.cliente, 'elemento') else None
 
     def obtener_origen(self):
         """
         Retorna el vertice de origen (almacenamiento) asociado a este pedido.
         Siempre retorna la referencia única del objeto Vertice.
         """
-        origen = self.origen.elemento() if self.origen and hasattr(self.origen, 'elemento') else None
-        return self.origen
+        return self.origen.elemento if self.origen and hasattr(self.origen, 'elemento') else None
 
     def obtener_destino(self):
         """
         Retorna el vertice de destino (cliente) asociado a este pedido.
         Siempre retorna la referencia única del objeto Vertice.
         """
-        destino = self.destino.elemento() if self.destino and hasattr(self.destino, 'elemento') else None
-        return self.destino
+        return self.destino.elemento if self.destino and hasattr(self.destino, 'elemento') else None
 
     def asignar_ruta(self, ruta, peso_total):
         self.ruta = ruta
@@ -80,8 +77,8 @@ class Pedido:
 
     def validar_origen_destino(self, origen, destino):
         resultado = (self.origen is origen and self.destino is destino) or \
-               (getattr(self.origen.elemento(), 'id_almacenamiento', None) == getattr(origen.elemento(), 'id_almacenamiento', None) and
-                getattr(self.destino.elemento(), 'id_cliente', None) == getattr(destino.elemento(), 'id_cliente', None))
+               (getattr(self.origen.elemento, 'id_almacenamiento', None) == getattr(origen.elemento, 'id_almacenamiento', None) and
+                getattr(self.destino.elemento, 'id_cliente', None) == getattr(destino.elemento, 'id_cliente', None))
         return resultado
 
     def serializar(self):

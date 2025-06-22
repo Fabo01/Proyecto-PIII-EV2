@@ -7,9 +7,11 @@ from Backend.Infraestructura.Repositorios.repositorio_pedidos import Repositorio
 from Backend.Infraestructura.Repositorios.repositorio_rutas import RepositorioRutas
 from Backend.Servicios.Observer.SujetoObservable import SujetoObservable
 from Backend.Servicios.Observer.ObserverEstadisticas import ObserverEstadisticas
+from Backend.Servicios.Observer.ObserverPedidos import ObserverPedidos
 from Backend.Infraestructura.TDA.TDA_AVL import AVL
 import logging
 import random
+import traceback
 
 class Simulacion(SujetoObservable):
     """
@@ -27,6 +29,53 @@ class Simulacion(SujetoObservable):
             cls._instancia._inicializado = False
         return cls._instancia
 
+    def registrar_observadores_global(self, observers=None):
+        """
+        Registra todos los observers relevantes en todos los repositorios, TDA y entidades de dominio.
+        Permite auditar y trazar todos los eventos importantes de la simulación.
+        """
+        if observers is None:
+            observers = [self._observer_estadisticas, self._observer_pedidos]
+        # Repositorios y sus hashmaps
+        for repo in [self._repo_clientes, self._repo_almacenamientos, self._repo_recargas, self._repo_vertices, self._repo_aristas, self._repo_pedidos, self._repo_rutas]:
+            for obs in observers:
+                repo.agregar_observador(obs)
+            # HashMap interno
+            if hasattr(repo, 'obtener_hashmap'):
+                hashmap = repo.obtener_hashmap()
+                if hashmap:
+                    for obs in observers:
+                        hashmap.agregar_observador(obs)
+        # TDA AVL
+        for obs in observers:
+            self._avl_rutas.agregar_observador(obs)
+        # Grafo (si existe)
+        if hasattr(self._repo_vertices, 'grafo') and self._repo_vertices.grafo:
+            for obs in observers:
+                self._repo_vertices.grafo.agregar_observador(obs)
+
+    def registrar_observadores_entidad(self, entidad, observers=None):
+        """
+        Registra los observers en una entidad de dominio (Cliente, Almacenamiento, Recarga, Pedido, Arista, etc).
+        """
+        if observers is None:
+            observers = [self._observer_estadisticas, self._observer_pedidos]
+        if hasattr(entidad, 'agregar_observador'):
+            for obs in observers:
+                entidad.agregar_observador(obs)
+
+    def notificar_observadores(self, evento, datos=None):
+        """
+        Notifica a todos los observers registrados en la simulación.
+        Cumple con la interfaz IObserver (evento, sujeto, datos).
+        """
+        for observador in getattr(self, '_observadores', []):
+            try:
+                observador.actualizar(evento, self, datos)
+            except Exception as e:
+                import logging
+                logging.error(f"Error notificando observer {type(observador).__name__}: {e}")
+
     def __init__(self, repo_clientes, repo_almacenamientos, repo_recargas, repo_vertices, repo_aristas, repo_pedidos, repo_rutas):
         if not getattr(self, '_inicializado', False):
             super().__init__()  # SujetoObservable
@@ -37,18 +86,13 @@ class Simulacion(SujetoObservable):
             self._repo_aristas = repo_aristas
             self._repo_pedidos = repo_pedidos
             self._repo_rutas = repo_rutas
-            self._estrategia_ruta = None
             self._avl_rutas = AVL()
-            self._logger = logging.getLogger("Simulacion")
-            if not self._logger.hasHandlers():
-                handler = logging.StreamHandler()
-                formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
-                handler.setFormatter(formatter)
-                self._logger.addHandler(handler)
-            self._logger.setLevel(logging.INFO)
-            # Observador de estadisticas
-            self._observer_estadisticas = ObserverEstadisticas(self)
-            self.agregar_observador(self._observer_estadisticas)
+            # Instanciar observers
+            self._observer_estadisticas = ObserverEstadisticas(servicio_estadisticas=None)  # Pasa el servicio real
+            self._observer_pedidos = ObserverPedidos()  # Instancia real
+            self._observadores = [self._observer_estadisticas, self._observer_pedidos]
+            # Registrar observers en todos los componentes
+            self.registrar_observadores_global(self._observadores)
             self._inicializado = True
 
     @property
@@ -152,153 +196,227 @@ class Simulacion(SujetoObservable):
         return self._repo_rutas.obtener_hashmap()
 
     def iniciar_simulacion(self, n_vertices: int, m_aristas: int, n_pedidos: int):
-        """
-        Inicializa la simulacion: genera vertices, aristas y pedidos siguiendo los requisitos.
-        """
+        import random
+        from collections import defaultdict, deque
+        import logging
+        logger = logging.getLogger("Simulacion")
         # Limpiar repositorios
-        self.repo_vertices.limpiar()
-        self.repo_aristas.limpiar()
-        self.repo_clientes.limpiar()
-        self.repo_almacenamientos.limpiar()
-        self.repo_recargas.limpiar()
-        self.repo_pedidos.limpiar()
-        self.repo_rutas.limpiar()
-        self._avl_rutas = AVL()
-        # Generacion de vertices con proporciones: 20% almacenamiento, 20% recarga, 60% clientes
-        from Backend.Dominio.EntFabricas.FabricaAlmacenamientos import FabricaAlmacenamientos
-        from Backend.Dominio.EntFabricas.FabricaRecargas import FabricaRecargas
-        from Backend.Dominio.EntFabricas.FabricaClientes import FabricaClientes
-        fa = FabricaAlmacenamientos()
-        fr = FabricaRecargas()
-        fc = FabricaClientes()
-        n_alm = max(1, int(n_vertices * 0.2))
-        n_rec = max(1, int(n_vertices * 0.2))
-        n_cli = n_vertices - n_alm - n_rec
-        for i in range(n_alm):
-            alm = fa.crear(f"A{i+1}", f"Almacenamiento {i+1}")
-            self.repo_almacenamientos.agregar(alm)
-            # LOG: Verificar tipo antes de agregar al repositorio de vértices
-            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar almacenamiento al repo_vertices: {alm} (type={type(alm)})")
-            if not hasattr(alm, 'id_almacenamiento'):
-                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_almacenamiento: {alm}")
-            # Si no es Vertice, envolverlo
+        self._repo_clientes.limpiar()
+        self._repo_almacenamientos.limpiar()
+        self._repo_recargas.limpiar()
+        self._repo_vertices.limpiar()
+        self._repo_aristas.limpiar()
+        self._repo_pedidos.limpiar()
+        self._repo_rutas.limpiar()
+
+        # 1. Crear vertices temporales (sin persistencia)
+        almacenes = []
+        clientes = []
+        recargas = []
+        total_almacenes = max(1, int(n_vertices * 0.2))
+        total_recargas = max(1, int(n_vertices * 0.2))
+        total_clientes = n_vertices - total_almacenes - total_recargas
+        id_vertices = 0
+        for i in range(total_almacenes):
+            nombre = f"Almacen_{i} (Vertice {id_vertices})"
+            almacen = self.fabricas['almacenamientos'].crear(id_vertices, nombre)
+            almacenes.append(almacen)
+            id_vertices += 1
+        for i in range(total_recargas):
+            nombre = f"Recarga_{i} (Vertice {id_vertices})"
+            recarga = self.fabricas['recargas'].crear(id_vertices, nombre)
+            recargas.append(recarga)
+            id_vertices += 1
+        for i in range(total_clientes):
+            nombre = f"Cliente_{i} (Vertice {id_vertices})"
+            cliente = self.fabricas['clientes'].crear(id_vertices, nombre)
+            clientes.append(cliente)
+            id_vertices += 1
+        logger.info(f"[Depuracion] Almacenes generados: {almacenes}")
+        logger.info(f"[Depuracion] Recargas generadas: {recargas}")
+        logger.info(f"[Depuracion] Clientes generados: {clientes}")
+
+        # 2. Crear grafo temporal puro Python (sin persistencia)
+        vertices_tmp = almacenes + recargas + clientes
+        id_map = {v: idx for idx, v in enumerate(vertices_tmp)}
+        n = len(vertices_tmp)
+        # Generar todas las posibles aristas (sin duplicados, no dirigido)
+        posibles_aristas = []
+        for i in range(n):
+            for j in range(i+1, n):
+                peso = random.randint(5, 40)
+                posibles_aristas.append((i, j, peso))
+        random.shuffle(posibles_aristas)
+
+        # 3. Conectividad mínima: usar Union-Find para crear un árbol generador aleatorio
+        parent = list(range(n))
+        def find(u):
+            while parent[u] != u:
+                parent[u] = parent[parent[u]]
+                u = parent[u]
+            return u
+        def union(u, v):
+            pu, pv = find(u), find(v)
+            if pu == pv:
+                return False
+            parent[pu] = pv
+            return True
+        aristas_utiles = []
+        usados = set()
+        for (u, v, peso) in posibles_aristas:
+            if union(u, v):
+                aristas_utiles.append((u, v, peso))
+                usados.add((u, v))
+                usados.add((v, u))
+                if len(aristas_utiles) == n-1:
+                    break
+        # Guardar copia del árbol generador mínimo (persistencia garantizada)
+        arbol_generador = list(aristas_utiles)
+        usados_arbol = set(usados)
+
+        # 4. Agregar aristas extra hasta m_aristas, validando segmentación
+        extras = [a for a in posibles_aristas if (a[0], a[1]) not in usados_arbol and (a[1], a[0]) not in usados_arbol]
+        random.shuffle(extras)
+        def camino_segmentado(grafo, origen, destino, recarga_idxs):
+            # BFS: cada estado es (nodo, bateria_restante)
+            queue = deque()
+            visitados = set()
+            queue.append((origen, 50))
+            while queue:
+                actual, bateria = queue.popleft()
+                if actual == destino:
+                    return True
+                for vecino, peso in grafo[actual]:
+                    nueva_bateria = bateria - peso
+                    es_recarga = vecino in recarga_idxs
+                    if es_recarga:
+                        nueva_bateria = 50
+                    if nueva_bateria < 0:
+                        continue
+                    estado = (vecino, nueva_bateria)
+                    if estado not in visitados:
+                        visitados.add(estado)
+                        queue.append(estado)
+            return False
+        # Construir grafo temporal para validación
+        grafo_tmp = defaultdict(list)
+        for (u, v, peso) in aristas_utiles:
+            grafo_tmp[u].append((v, peso))
+            grafo_tmp[v].append((u, peso))
+        recarga_idxs = set(range(total_almacenes, total_almacenes + total_recargas))
+        # Agregar aristas extra solo si no rompen la segmentación
+        for (u, v, peso) in extras:
+            if len(aristas_utiles) >= m_aristas:
+                break
+            # Probar agregar la arista
+            grafo_tmp[u].append((v, peso))
+            grafo_tmp[v].append((u, peso))
+            valido = True
+            for idx_almacen in range(total_almacenes):
+                for idx_cliente in range(total_almacenes + total_recargas, n):
+                    if not camino_segmentado(grafo_tmp, idx_almacen, idx_cliente, recarga_idxs):
+                        valido = False
+                        break
+                if not valido:
+                    break
+            if valido:
+                aristas_utiles.append((u, v, peso))
+                usados_arbol.add((u, v))
+                usados_arbol.add((v, u))
+            else:
+                # Si no es válido, quitar la arista
+                grafo_tmp[u].pop()
+                grafo_tmp[v].pop()
+
+        # 5. Validar caminos segmentados entre cada (almacen, cliente) (garantía final)
+        for idx_almacen in range(total_almacenes):
+            for idx_cliente in range(total_almacenes + total_recargas, n):
+                if not camino_segmentado(grafo_tmp, idx_almacen, idx_cliente, recarga_idxs):
+                    raise Exception(f"No existe camino segmentado entre almacen {idx_almacen} y cliente {idx_cliente}")
+
+        # 6. Persistir solo los vertices y aristas útiles
+        # Persistir vertices
+        for idx, v in enumerate(vertices_tmp):
             from Backend.Infraestructura.TDA.TDA_Vertice import Vertice
-            if not isinstance(alm, Vertice):
-                vertice_alm = Vertice(alm)
-                logging.debug(f"[AGREGAR_VERTICE] Envolviendo almacenamiento en Vertice: {vertice_alm} (type={type(vertice_alm)})")
-            else:
-                vertice_alm = alm
-            self.repo_vertices.agregar(vertice_alm, getattr(alm, 'id_almacenamiento', None))
-            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
-        for i in range(n_rec):
-            rec = fr.crear(f"R{i+1}", f"Recarga {i+1}")
-            self.repo_recargas.agregar(rec)
-            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar recarga al repo_vertices: {rec} (type={type(rec)})")
-            if not hasattr(rec, 'id_recarga'):
-                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_recarga: {rec}")
-            if not isinstance(rec, Vertice):
-                vertice_rec = Vertice(rec)
-                logging.debug(f"[AGREGAR_VERTICE] Envolviendo recarga en Vertice: {vertice_rec} (type={type(vertice_rec)})")
-            else:
-                vertice_rec = rec
-            self.repo_vertices.agregar(vertice_rec, getattr(rec, 'id_recarga', None))
-            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
-        for i in range(n_cli):
-            cli = fc.crear(f"C{i+1}", f"Cliente {i+1}")
-            self.repo_clientes.agregar(cli)
-            logging.debug(f"[AGREGAR_VERTICE] Intentando agregar cliente al repo_vertices: {cli} (type={type(cli)})")
-            if not hasattr(cli, 'id_cliente'):
-                logging.error(f"[AGREGAR_VERTICE] El objeto no tiene id_cliente: {cli}")
-            if not isinstance(cli, Vertice):
-                vertice_cli = Vertice(cli)
-                logging.debug(f"[AGREGAR_VERTICE] Envolviendo cliente en Vertice: {vertice_cli} (type={type(vertice_cli)})")
-            else:
-                vertice_cli = cli
-            self.repo_vertices.agregar(vertice_cli, getattr(cli, 'id_cliente', None))
-            logging.debug(f"[AGREGAR_VERTICE] Estado actual de repo_vertices: {[str(v) + ' type=' + str(type(v)) for v in self.repo_vertices.todos()]}")
-        # Asegurar que all_vertices solo contenga instancias de Vertice únicas del repositorio
-        all_vertices = list(self.repo_vertices.todos())
-        logging.info(f"[ALL_VERTICES] Contenido de all_vertices tras poblar: {[str(v) + ' type=' + str(type(v)) for v in all_vertices]}")
-        for idx, v in enumerate(all_vertices):
-            if not (hasattr(v, 'elemento') and callable(getattr(v, 'elemento', None))):
-                import traceback
-                logging.error(f"[ALL_VERTICES] Elemento en all_vertices no es Vertice: idx={idx}, v={v}, type={type(v)}\nStack trace:\n{traceback.format_exc()}")
-                raise TypeError(f"[ALL_VERTICES] Se esperaba Vertice en all_vertices, recibido: idx={idx}, type={type(v)}")
-        logging.info(f"[ALL_VERTICES] Todos los elementos en all_vertices son instancias de Vertice. Total: {len(all_vertices)}")
-        # Generar aristas asegurando conectividad y aleatoriedad
-        from Backend.Dominio.EntFabricas.FabricaAristas import FabricaAristas
-        fae = FabricaAristas()
-        # Conexion en cadena minima
-        for u, v in zip(all_vertices, all_vertices[1:]):
-            logging.debug(f"Creando arista: u={u} (type={type(u)}), v={v} (type={type(v)})")
-            if not (hasattr(u, 'elemento') and hasattr(v, 'elemento')):
-                logging.error(f"[ARISTA-CHAIN] Uno de los objetos no es Vertice: u={u} (type={type(u)}), v={v} (type={type(v)})")
-                raise TypeError(f"[ARISTA-CHAIN] Se esperaba Vertice, recibido: u={type(u)}, v={type(v)}")
-            peso = random.randint(1, 50)
-            arista = fae.crear(u, v, peso)
-            self.repo_aristas.agregar(arista)
-        # Aristas adicionales hasta m_aristas
-        existentes = len(all_vertices) - 1
-        posibles = [(u, v) for u in all_vertices for v in all_vertices if u != v]
-        while existentes < m_aristas and posibles:
-            u, v = random.choice(posibles)
-            logging.debug(f"Creando arista extra: u={u} (type={type(u)}), v={v} (type={type(v)})")
-            if not (hasattr(u, 'elemento') and hasattr(v, 'elemento')):
-                logging.error(f"[ARISTA-EXTRA] Uno de los objetos no es Vertice: u={u} (type={type(u)}), v={v} (type={type(v)})")
-                raise TypeError(f"[ARISTA-EXTRA] Se esperaba Vertice, recibido: u={type(u)}, v={type(v)}")
-            if not self.repo_aristas.existe(u, v):
-                peso = random.randint(1, 50)
-                arista = fae.crear(u, v, peso)
-                self.repo_aristas.agregar(arista)
-                existentes += 1
-        # Generar pedidos entre almacenamientos y clientes
-        from Backend.Dominio.EntFabricas.FabricaPedidos import FabricaPedidos
-        fp = FabricaPedidos()
-        almacenes = list(self.repo_almacenamientos.todos())
-        clientes = list(self.repo_clientes.todos())
-        prioridades = ['alta', 'media', 'baja']
-        for j in range(1, n_pedidos + 1):
-            almacen = random.choice(almacenes)
+            vertice = Vertice(v)
+            id_elemento = getattr(v, 'id_cliente', None) or getattr(v, 'id_almacenamiento', None) or getattr(v, 'id_recarga', None)
+            self._repo_vertices.agregar(vertice, idx)
+            # Registrar en su repositorio correspondiente
+            if hasattr(v, 'id_cliente'):
+                self._repo_clientes.agregar(v)
+                # Registrar observers en la entidad
+                self.registrar_observadores_entidad(v)
+            elif hasattr(v, 'id_almacenamiento'):
+                self._repo_almacenamientos.agregar(v)
+                self.registrar_observadores_entidad(v)
+            elif hasattr(v, 'id_recarga'):
+                self._repo_recargas.agregar(v)
+                self.registrar_observadores_entidad(v)
+        # Persistir aristas
+        from Backend.Infraestructura.TDA.TDA_Arista import Arista
+        for (u, v, peso) in aristas_utiles:
+            vertice_u = self._repo_vertices.obtener(u)
+            vertice_v = self._repo_vertices.obtener(v)
+            arista = Arista(vertice_u, vertice_v, peso)
+            clave = (
+                getattr(vertice_u.elemento, 'id_cliente', None) or getattr(vertice_u.elemento, 'id_almacenamiento', None) or getattr(vertice_u.elemento, 'id_recarga', None),
+                getattr(vertice_v.elemento, 'id_cliente', None) or getattr(vertice_v.elemento, 'id_almacenamiento', None) or getattr(vertice_v.elemento, 'id_recarga', None)
+            )
+            self._repo_aristas.agregar(arista, clave)
+            # Registrar observers en la arista
+            self.registrar_observadores_entidad(arista)
+        # Generar pedidos aleatorios
+        pedidos_generados = 0
+        pedidos = []
+        while pedidos_generados < n_pedidos:
             cliente = random.choice(clientes)
-            # Buscar los vértices correspondientes
-            origen = self.repo_vertices.obtener(getattr(almacen, 'id_almacenamiento', None))
-            destino = self.repo_vertices.obtener(getattr(cliente, 'id_cliente', None))
-            logging.debug(f"Creando pedido: almacen={almacen} (type={type(almacen)}), cliente={cliente} (type={type(cliente)}), origen={origen} (type={type(origen)}), destino={destino} (type={type(destino)})")
-            if not (hasattr(origen, 'elemento') and hasattr(destino, 'elemento')):
-                logging.error(f"[PEDIDO] Origen o destino no es Vertice: origen={origen} (type={type(origen)}), destino={destino} (type={type(destino)})")
-                raise TypeError(f"[PEDIDO] Se esperaba Vertice para origen/destino, recibido: origen={type(origen)}, destino={type(destino)}")
+            almacen = random.choice(almacenes)
+            prioridades = ['Muy Baja', 'Baja', 'Media', 'Alta', 'Muy Alta', 'Emergencia']
             prioridad = random.choice(prioridades)
-            pedido = fp.crear(f"P{j}", destino, origen, destino, prioridad)  # cliente_v, origen_v, destino_v, prioridad
-            self.repo_pedidos.agregar(pedido)
-            # Agregar el pedido al elemento cliente (no al vértice)
-            if hasattr(destino, 'elemento'):
-                elem_cliente = destino.elemento()
-                if hasattr(elem_cliente, 'agregar_pedido'):
-                    elem_cliente.agregar_pedido(pedido)
-        self.notificar_observadores("simulacion_iniciada", {
-            "n_vertices": n_vertices,
-            "m_aristas": m_aristas,
-            "n_pedidos": n_pedidos
+            pedido = self.fabricas['pedidos'].crear(pedidos_generados, almacen, cliente, prioridad)
+            self._repo_pedidos.agregar(pedido)
+            self.registrar_observadores_entidad(pedido)
+            pedidos.append(pedido)
+            pedidos_generados += 1
+        logger.info(f"[Depuracion] Pedidos generados: {pedidos}")
+        # Notificar observadores
+        self.notificar_observadores('simulacion_iniciada', {
+            'vertices': self._repo_vertices.todos(),
+            'aristas': self._repo_aristas.todos(),
+            'clientes': self._repo_clientes.todos(),
+            'almacenamientos': self._repo_almacenamientos.todos(),
+            'recargas': self._repo_recargas.todos(),
+            'pedidos': self._repo_pedidos.todos()
         })
-        return None
+        return True
+
+    def registrar_observadores_entidad(self, entidad, observers=None):
+        """
+        Registra los observers en una entidad de dominio (Cliente, Almacenamiento, Recarga, Pedido, Arista, etc).
+        """
+        if observers is None:
+            observers = [self._observer_estadisticas, self._observer_pedidos]
+        if hasattr(entidad, 'agregar_observador'):
+            for obs in observers:
+                entidad.agregar_observador(obs)
 
     def obtener_vertices(self):
-        return list(self.repo_vertices.todos())
+        return list(self._repo_vertices.todos())
 
     def obtener_aristas(self):
-        return list(self.repo_aristas.todos())
+        return list(self._repo_aristas.todos())
 
     def obtener_clientes(self):
-        return list(self.repo_clientes.todos())
+        return list(self._repo_clientes.todos())
 
     def obtener_almacenamientos(self):
-        return list(self.repo_almacenamientos.todos())
+        return list(self._repo_almacenamientos.todos())
 
     def obtener_recargas(self):
-        return list(self.repo_recargas.todos())
+        return list(self._repo_recargas.todos())
 
     def obtener_pedidos(self):
-        return list(self.repo_pedidos.todos())
+        return list(self._repo_pedidos.todos())
 
     def set_estrategia_ruta(self, estrategia):
         """
@@ -334,10 +452,29 @@ class Simulacion(SujetoObservable):
         return self.repo_pedidos.obtener(id_pedido)
 
     def obtener_rutas_mas_frecuentes(self, top: int = 5):
-        return self._avl_rutas.obtener_mas_frecuentes(top)
+        # Obtener todas las rutas y sus frecuencias
+        rutas_frecuencias = self._avl_rutas.inorden()
+        # Ordenar por frecuencia descendente
+        rutas_frecuencias.sort(key=lambda x: x[1], reverse=True)
+        # Tomar los top N
+        top_rutas = rutas_frecuencias[:top]
+        # Formatear para la API (puedes ajustar el formato según lo que espera el frontend)
+        return [
+            {"camino": ruta, "frecuencia": frecuencia}
+            for ruta, frecuencia in top_rutas
+        ]
 
     def notificar_observadores(self, evento, datos=None):
-        self.notificar(evento, datos)
+        """
+        Notifica a todos los observers registrados en la simulación.
+        Cumple con la interfaz IObserver (evento, sujeto, datos).
+        """
+        for observador in getattr(self, '_observadores', []):
+            try:
+                observador.actualizar(evento, self, datos)
+            except Exception as e:
+                import logging
+                logging.error(f"Error notificando observer {type(observador).__name__}: {e}")
 
     def reiniciar_todo(self):
         self.repo_vertices.limpiar()

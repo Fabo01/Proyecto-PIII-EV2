@@ -38,7 +38,7 @@ class MapeadorPedido(IMapeadorDominioDTO):
         if hasattr(pedido, 'obtener_origen'):
             origen = pedido.obtener_origen() if callable(pedido.obtener_origen) else None
             if origen is not None:
-                elem = origen.elemento() if hasattr(origen, 'elemento') else origen
+                elem = origen.elemento if hasattr(origen, 'elemento') else origen
                 origen_dto = RespuestaVertice(
                     id=getattr(elem, 'id_cliente', getattr(elem, 'id_almacenamiento', getattr(elem, 'id_recarga', 0))),
                     tipo=getattr(elem, 'tipo_elemento', ''),
@@ -49,7 +49,7 @@ class MapeadorPedido(IMapeadorDominioDTO):
         if hasattr(pedido, 'obtener_destino'):
             destino = pedido.obtener_destino() if callable(pedido.obtener_destino) else None
             if destino is not None:
-                elem = destino.elemento() if hasattr(destino, 'elemento') else destino
+                elem = destino.elemento if hasattr(destino, 'elemento') else destino
                 destino_dto = RespuestaVertice(
                     id=getattr(elem, 'id_cliente', getattr(elem, 'id_almacenamiento', getattr(elem, 'id_recarga', 0))),
                     tipo=getattr(elem, 'tipo_elemento', ''),

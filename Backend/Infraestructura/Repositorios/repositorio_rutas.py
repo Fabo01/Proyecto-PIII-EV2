@@ -29,7 +29,7 @@ class RepositorioRutas(IRepositorioRutas):
 
     def notificar_observadores(self, evento, datos=None):
         for observador in self._observadores:
-            observador.actualizar(evento, datos)
+            observador.actualizar(evento, self, datos)
 
     def agregar(self, ruta, clave):
         """

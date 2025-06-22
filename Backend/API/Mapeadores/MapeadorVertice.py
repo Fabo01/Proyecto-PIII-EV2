@@ -14,7 +14,7 @@ class MapeadorVertice:
         Returns:
             RespuestaVertice: DTO serializable para la API.
         """
-        elemento = vertice.elemento()
+        elemento = vertice.elemento
         # Determinar tipo y nombre del elemento asociado
         tipo = getattr(elemento, 'tipo_elemento', 'desconocido')
         nombre = getattr(elemento, 'nombre', str(elemento))

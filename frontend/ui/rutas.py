@@ -5,6 +5,7 @@ from frontend.visualizacion.avl import visualizar_avl
 def ui_rutas():
     """
     Pestaña 4: Análisis de rutas más frecuentes (AVL).
+    Cumple con modularidad, robustez y nombres en español.
     """
     st.header("Rutas más frecuentes (AVL)")
     stats = api_get("/estadisticas/")

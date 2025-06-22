@@ -30,7 +30,9 @@ def clientes_hashmap(service=Depends(get_simulacion_service)):
     hashmap = service.obtener_clientes_hashmap()
     if hashmap is None:
         raise HTTPException(status_code=404, detail="No hay clientes en el sistema")
-    return RespuestaHashMap(hashmap=hashmap)
+    # Mapear Cliente a DTO serializable
+    hashmap_dto = {str(k): MapeadorCliente.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
 
 @router.get("/{id}", response_model=RespuestaCliente)
 def obtener_cliente(id: int, service=Depends(get_simulacion_service)):

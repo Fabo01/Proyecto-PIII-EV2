@@ -21,6 +21,13 @@ class MapeadorSimulacion:
         Returns:
             RespuestaSimulacionEstado: DTO listo para la API.
         """
+        import logging
+        logger = logging.getLogger("MapeadorSimulacion")
+        logger.info(f"[Depuracion] Clientes dominio: {estado.get('clientes', [])}")
+        logger.info(f"[Depuracion] Almacenamientos dominio: {estado.get('almacenamientos', [])}")
+        logger.info(f"[Depuracion] Recargas dominio: {estado.get('recargas', [])}")
+        logger.info(f"[Depuracion] Pedidos dominio: {estado.get('pedidos', [])}")
+        logger.info(f"[Depuracion] Rutas dominio: {estado.get('rutas', [])}")
         clientes = [MapeadorCliente.a_dto(c) for c in estado.get('clientes', [])]
         almacenamientos = [MapeadorAlmacenamiento.a_dto(a) for a in estado.get('almacenamientos', [])]
         recargas = [MapeadorRecarga.a_dto(r) for r in estado.get('recargas', [])]

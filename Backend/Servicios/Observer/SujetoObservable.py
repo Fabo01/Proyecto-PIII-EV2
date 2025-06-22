@@ -29,4 +29,4 @@ class SujetoObservable(ISujeto):
         Notifica a todos los observadores registrados sobre un evento.
         """
         for observador in self._observadores:
-            observador.actualizar(evento, datos)
+            observador.actualizar(evento, self, datos)

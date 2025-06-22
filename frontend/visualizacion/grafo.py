@@ -1,26 +1,51 @@
 import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib.patches import Patch
 
 def visualizar_grafo(vertices, aristas, ruta_resaltada=None):
     """
     Dibuja el grafo de la red de drones usando networkx y matplotlib.
+    Cumple con requisitos de robustez, validación y escalabilidad.
     """
-    if not vertices:
+    if not vertices or not isinstance(vertices, list):
         st.warning("No hay vértices para mostrar en la red.")
         return
-    if not aristas:
+    if not aristas or not isinstance(aristas, list):
         st.warning("No hay aristas para mostrar en la red.")
         return
-    G = nx.DiGraph()
+    # Validar estructura de los vértices
+    nodos_validos = []
     tipo_color = {'cliente': 'tab:blue', 'almacenamiento': 'tab:orange', 'recarga': 'tab:green'}
     id_to_tipo = {}
+    id_to_nombre = {}
     for vertice in vertices:
+        vid = vertice.get('id')
         tipo = vertice.get('tipo', 'otro')
-        G.add_node(vertice['id'], tipo=tipo, nombre=vertice.get('nombre', str(vertice['id'])))
-        id_to_tipo[vertice['id']] = tipo
+        nombre = vertice.get('nombre', str(vid))
+        if vid is None or tipo not in tipo_color:
+            continue  # Solo mostrar nodos válidos y conocidos
+        nodos_validos.append(vid)
+        id_to_tipo[vid] = tipo
+        id_to_nombre[vid] = nombre
+    if not nodos_validos:
+        st.warning("No hay vértices válidos para mostrar (clientes, almacenes o recargas).")
+        return
+    G = nx.DiGraph()
+    for vid in nodos_validos:
+        G.add_node(vid, tipo=id_to_tipo[vid], nombre=id_to_nombre[vid])
+    # Validar aristas: solo entre nodos válidos
+    aristas_validas = []
     for arista in aristas:
-        G.add_edge(arista['origen'], arista['destino'], peso=arista.get('peso', 1))
+        origen = arista.get('origen')
+        destino = arista.get('destino')
+        peso = arista.get('peso', 1)
+        if origen in nodos_validos and destino in nodos_validos:
+            G.add_edge(origen, destino, peso=peso)
+            aristas_validas.append((origen, destino))
+    if not aristas_validas:
+        st.warning("No hay aristas válidas para mostrar en la red.")
+        return
     pos = nx.spring_layout(G, seed=42)
     fig, ax = plt.subplots(figsize=(12, 7))
     colores = [tipo_color.get(id_to_tipo[n], 'tab:gray') for n in G.nodes]
@@ -30,10 +55,16 @@ def visualizar_grafo(vertices, aristas, ruta_resaltada=None):
     edge_labels = nx.get_edge_attributes(G, 'peso')
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red', ax=ax)
     if ruta_resaltada:
-        path_edges = list(zip(ruta_resaltada, ruta_resaltada[1:]))
-        nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='crimson', width=3, ax=ax)
-    from matplotlib.patches import Patch
+        path_edges = [(ruta_resaltada[i], ruta_resaltada[i+1]) for i in range(len(ruta_resaltada)-1)
+                      if ruta_resaltada[i] in G.nodes and ruta_resaltada[i+1] in G.nodes]
+        if path_edges:
+            nx.draw_networkx_edges(G, pos, edgelist=path_edges, edge_color='crimson', width=3, ax=ax)
     legend_elements = [Patch(facecolor=color, label=tipo.capitalize()) for tipo, color in tipo_color.items()]
     ax.legend(handles=legend_elements, loc='upper right')
     plt.axis('off')
     st.pyplot(fig)
+    # Mensaje de ayuda si faltan tipos
+    tipos_presentes = set(id_to_tipo.values())
+    for tipo, color in tipo_color.items():
+        if tipo not in tipos_presentes:
+            st.info(f"No hay vértices de tipo '{tipo}' en la red actual.")

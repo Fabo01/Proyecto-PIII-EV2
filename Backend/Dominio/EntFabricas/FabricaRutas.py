@@ -25,8 +25,8 @@ class FabricaRutas(FabricaInterfaz):
         from Backend.Infraestructura.Repositorios.repositorio_rutas import RepositorioRutas
         repo = RepositorioRutas()
         clave = (
-            getattr(origen.elemento(), 'id_cliente', None) or getattr(origen.elemento(), 'id_almacenamiento', None) or getattr(origen.elemento(), 'id_recarga', None),
-            getattr(destino.elemento(), 'id_cliente', None) or getattr(destino.elemento(), 'id_almacenamiento', None) or getattr(destino.elemento(), 'id_recarga', None),
+            getattr(origen.elemento, 'id_cliente', None) or getattr(origen.elemento, 'id_almacenamiento', None) or getattr(origen.elemento, 'id_recarga', None),
+            getattr(destino.elemento, 'id_cliente', None) or getattr(destino.elemento, 'id_almacenamiento', None) or getattr(destino.elemento, 'id_recarga', None),
             algoritmo
         )
         existente = repo.obtener(clave)
@@ -37,7 +37,7 @@ class FabricaRutas(FabricaInterfaz):
         try:
             fabrica_vertices = FabricaVertices()
             # Convertir vertices del camino a vértices únicos
-            camino_vertices = [fabrica_vertices.crear(n.elemento()) for n in camino]
+            camino_vertices = [fabrica_vertices.crear(n.elemento) for n in camino]
             ruta = Ruta(origen, destino, camino_vertices, peso_total, algoritmo, tiempo_calculo)
             repo.agregar(ruta, clave)
             if hasattr(self, 'notificar_observadores'):

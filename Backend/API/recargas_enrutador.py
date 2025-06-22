@@ -20,6 +20,18 @@ def listar_recargas(service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=404, detail="No hay recargas registradas")
     return [MapeadorRecarga.a_dto(r) for r in recargas]
 
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def recargas_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de recargas (ID → Objeto Recarga serializable).
+    """
+    hashmap = service.obtener_recargas_hashmap()
+    if hashmap is None:
+        raise HTTPException(status_code=404, detail="No hay recargas en el sistema")
+    from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
+    hashmap_dto = {str(k): MapeadorRecarga.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
+
 @router.get("/{id}", response_model=RespuestaRecarga)
 def obtener_recarga(id: int, service=Depends(get_simulacion_service)):
     """
@@ -63,12 +75,4 @@ def eliminar_recarga(id: int, service=Depends(get_simulacion_service)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Error al eliminar recarga: {str(e)}")
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def recargas_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de recargas (ID → Objeto Recarga serializable).
-    """
-    hashmap = service.obtener_recargas_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay recargas en el sistema")
-    return RespuestaHashMap(hashmap=hashmap)
+

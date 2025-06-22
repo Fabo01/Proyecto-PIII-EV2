@@ -19,7 +19,7 @@ class MapeadorArista(IMapeadorDominioDTO):
             BaseArista: DTO listo para API.
         """
         return BaseArista(
-            origen=getattr(arista.origen.elemento(), 'id_cliente', getattr(arista.origen.elemento(), 'id_almacenamiento', getattr(arista.origen.elemento(), 'id_recarga', 0))),
-            destino=getattr(arista.destino.elemento(), 'id_cliente', getattr(arista.destino.elemento(), 'id_almacenamiento', getattr(arista.destino.elemento(), 'id_recarga', 0))),
+            origen=getattr(arista.origen.elemento, 'id_cliente', getattr(arista.origen.elemento, 'id_almacenamiento', getattr(arista.origen.elemento, 'id_recarga', 0))),
+            destino=getattr(arista.destino.elemento, 'id_cliente', getattr(arista.destino.elemento, 'id_almacenamiento', getattr(arista.destino.elemento, 'id_recarga', 0))),
             peso=float(getattr(arista, 'peso', 0.0))
         )

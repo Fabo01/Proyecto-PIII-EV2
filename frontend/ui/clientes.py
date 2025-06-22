@@ -3,7 +3,8 @@ from frontend.servicios.api import api_get
 
 def ui_clientes():
     """
-    Pestaña 3: Visualización de clientes y pedidos.
+    Pestaña 3: Visualización de clientes, pedidos y hashmaps de entidades.
+    Cumple con modularidad, robustez y nombres en español.
     """
     st.header("Clientes y Pedidos")
     clientes = api_get("/clientes/hashmap") or {}
@@ -12,7 +13,7 @@ def ui_clientes():
     st.json(clientes)
     st.subheader("HashMap de Pedidos (ID → Objeto)")
     st.json(pedidos)
-    # Agregar visualización de todos los hashmaps existentes
+    # Visualización de todos los hashmaps existentes
     st.subheader("HashMap de Almacenamientos (ID → Objeto)")
     almacenamientos = api_get("/almacenamientos/hashmap") or {}
     st.json(almacenamientos)

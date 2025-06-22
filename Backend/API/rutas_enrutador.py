@@ -39,6 +39,23 @@ def listar_rutas(service=Depends(get_simulacion_service)):
     except Exception as e:
         logger.error(f"GET /rutas: Error de mapeo: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error de mapeo: {str(e)}")
+    
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def obtener_rutas_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de rutas (clave → Objeto Ruta serializable).
+    """
+    logger.info("GET /rutas/hashmap llamado")
+    try:
+        hashmap = service.obtener_rutas_hashmap()
+        from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
+        # Convertir clave a str y valor a DTO
+        hashmap_dto = {str(k): MapeadorRuta.a_dto(v).model_dump() for k, v in hashmap.items()}
+        logger.info(f"GET /rutas/hashmap: {len(hashmap_dto)} rutas en el hashmap")
+        return RespuestaHashMap(hashmap=hashmap_dto)
+    except Exception as e:
+        logger.error(f"GET /rutas/hashmap: Error al obtener el hashmap de rutas: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error al obtener el hashmap de rutas: {str(e)}")
 
 @router.get("/{id}", response_model=RespuestaRuta)
 def obtener_ruta(id: int, service=Depends(get_simulacion_service)):
@@ -231,18 +248,5 @@ def calcular_todas_rutas_todos_algoritmos(service=Depends(get_simulacion_service
         logger.error(f"GET /rutas/pedido_todos_algoritmos: Error al calcular rutas para todos los pedidos: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error al calcular rutas para todos los pedidos: {str(e)}")
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def obtener_rutas_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de rutas (clave → Objeto Ruta serializable).
-    """
-    logger.info("GET /rutas/hashmap llamado")
-    try:
-        hashmap = service.obtener_rutas_hashmap()
-        from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
-        hashmap_dto = {str(k): MapeadorRuta.a_dto(v).model_dump() for k, v in hashmap.items()}
-        logger.info(f"GET /rutas/hashmap: {len(hashmap_dto)} rutas en el hashmap")
-        return RespuestaHashMap(hashmap=hashmap_dto)
-    except Exception as e:
-        logger.error(f"GET /rutas/hashmap: Error al obtener el hashmap de rutas: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error al obtener el hashmap de rutas: {str(e)}")
+
+

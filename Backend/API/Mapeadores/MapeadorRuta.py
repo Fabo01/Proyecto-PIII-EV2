@@ -16,7 +16,7 @@ class MapeadorRuta(IMapeadorDominioDTO):
         if hasattr(MapeadorRuta, 'notificar_observadores'):
             MapeadorRuta.notificar_observadores('mapeo_ruta_a_dto', {'ruta': ruta})
         def vertice_a_vertice(v):
-            elem = v.elemento() if hasattr(v, 'elemento') else v
+            elem = v.elemento if hasattr(v, 'elemento') else v
             vertice = RespuestaVertice(
                 id=getattr(elem, 'id_cliente', getattr(elem, 'id_almacenamiento', getattr(elem, 'id_recarga', 0))),
                 tipo=getattr(elem, 'tipo_elemento', ''),

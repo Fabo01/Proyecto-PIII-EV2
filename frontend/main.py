@@ -19,16 +19,25 @@ PESTANAS = [
 
 pestana = st.sidebar.radio("Selecciona una pestaña", PESTANAS, key="pestana")
 
-try:
-    if pestana == "Configuración de la Simulación":
+def despachar_pestana(nombre):
+    """
+    Despacha la función de UI correspondiente a la pestaña seleccionada.
+    Permite fácil extensión y escalabilidad.
+    """
+    if nombre == "Configuración de la Simulación":
         ui_simulacion()
-    elif pestana == "Explorar Red":
+    elif nombre == "Explorar Red":
         ui_red()
-    elif pestana == "Clientes y Pedidos":
+    elif nombre == "Clientes y Pedidos":
         ui_clientes()
-    elif pestana == "Análisis de Rutas":
+    elif nombre == "Análisis de Rutas":
         ui_rutas()
-    elif pestana == "Estadísticas Generales":
+    elif nombre == "Estadísticas Generales":
         ui_estadisticas()
+    else:
+        st.warning(f"Pestaña no implementada: {nombre}")
+
+try:
+    despachar_pestana(pestana)
 except Exception as e:
     mostrar_error(e)

@@ -20,6 +20,19 @@ def listar_aristas(service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=404, detail="No hay aristas registradas")
     return [MapeadorArista.a_dto(a) for a in aristas]
 
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def aristas_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de aristas (clave → Objeto Arista serializable).
+    """
+    hashmap = service.obtener_aristas_hashmap()
+    if hashmap is None:
+        raise HTTPException(status_code=404, detail="No hay aristas en el sistema")
+    from Backend.API.Mapeadores.MapeadorArista import MapeadorArista
+    # Mapear cada arista a DTO BaseArista
+    hashmap_dto = {str(k): MapeadorArista.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
+
 @router.get("/{origen_id}/{destino_id}", response_model=BaseArista)
 def obtener_arista(origen_id: int, destino_id: int, service=Depends(get_simulacion_service)):
     """
@@ -30,12 +43,4 @@ def obtener_arista(origen_id: int, destino_id: int, service=Depends(get_simulaci
         raise HTTPException(status_code=404, detail="Arista no encontrada")
     return MapeadorArista.a_dto(arista)
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def aristas_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de aristas (clave → Objeto Arista serializable).
-    """
-    hashmap = service.obtener_aristas_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay aristas en el sistema")
-    return RespuestaHashMap(hashmap=hashmap)
+

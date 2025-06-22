@@ -38,8 +38,10 @@ class RepositorioAristas(IRepositorioAristas):
         :param clave: Clave unica para la arista (por defecto, tupla de IDs de origen y destino).
         """
         if clave is None:
-            clave = (getattr(arista.origen.elemento(), 'id_cliente', None) or getattr(arista.origen.elemento(), 'id_almacenamiento', None) or getattr(arista.origen.elemento(), 'id_recarga', None),
-                     getattr(arista.destino.elemento(), 'id_cliente', None) or getattr(arista.destino.elemento(), 'id_almacenamiento', None) or getattr(arista.destino.elemento(), 'id_recarga', None))
+            clave = (
+                getattr(arista.origen.elemento, 'id_cliente', None) or getattr(arista.origen.elemento, 'id_almacenamiento', None) or getattr(arista.origen.elemento, 'id_recarga', None),
+                getattr(arista.destino.elemento, 'id_cliente', None) or getattr(arista.destino.elemento, 'id_almacenamiento', None) or getattr(arista.destino.elemento, 'id_recarga', None)
+            )
         self._aristas.insertar(clave, arista)
         self.notificar_observadores('repositorio_aristas_agregada', {'clave': clave, 'arista': arista})
 

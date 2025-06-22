@@ -11,6 +11,15 @@ class SimulacionDominioService(ISimulacionDominioService):
 
     def iniciar_simulacion(self, n_vertices: int, m_aristas: int, n_pedidos: int) -> None:
         self._sim.iniciar_simulacion(n_vertices, m_aristas, n_pedidos)
+        return {
+        "clientes": self._sim.obtener_clientes(),
+        "almacenamientos": self._sim.obtener_almacenamientos(),
+        "recargas": self._sim.obtener_recargas(),
+        "pedidos": self._sim.obtener_pedidos(),
+        "rutas": self._sim.obtener_rutas_mas_frecuentes(),
+        "estado": "iniciada",
+        "mensaje": None
+    }
 
     def obtener_vertices(self):
         return self._sim.obtener_vertices()

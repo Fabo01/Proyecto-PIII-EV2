@@ -63,25 +63,32 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
         return self._serv.obtener_rutas_mas_frecuentes(top)
 
     def obtener_rutas_hashmap(self):
-        return self._serv.obtener_rutas_hashmap()
+        orig = self._serv.obtener_rutas_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_vertices_hashmap(self):
-        return self._serv.obtener_vertices_hashmap()
+        orig = self._serv.obtener_vertices_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_aristas_hashmap(self):
-        return self._serv.obtener_aristas_hashmap()
+        orig = self._serv.obtener_aristas_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_clientes_hashmap(self):
-        return self._serv.obtener_clientes_hashmap()
+        orig = self._serv.obtener_clientes_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_almacenamientos_hashmap(self):
-        return self._serv.obtener_almacenamientos_hashmap()
+        orig = self._serv.obtener_almacenamientos_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_recargas_hashmap(self):
-        return self._serv.obtener_recargas_hashmap()
+        orig = self._serv.obtener_recargas_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def obtener_pedidos_hashmap(self):
-        return self._serv.obtener_pedidos_hashmap()
+        orig = self._serv.obtener_pedidos_hashmap()
+        return {str(k): v for k, v in (orig or {}).items()}
 
     def estado_actual(self):
         return {

@@ -21,6 +21,17 @@ def listar_vertices(service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=404, detail="No hay vertices registrados")
     return [MapeadorVertice.a_dto(v) for v in vertices]
 
+@router.get("/hashmap", response_model=RespuestaHashMap)
+def obtener_vertices_hashmap(service=Depends(get_simulacion_service)):
+    """
+    Devuelve el hashmap de vértices (ID → Objeto Vertice serializable).
+    """
+    hashmap = service.obtener_vertices_hashmap()
+    if hashmap is None:
+        raise HTTPException(status_code=404, detail="No hay vértices en el sistema")
+    from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
+    hashmap_dto = {str(k): MapeadorVertice.a_dto(v).model_dump() for k, v in hashmap.items()}
+    return RespuestaHashMap(hashmap=hashmap_dto)
 
 @router.get("/{id}", response_model=RespuestaVertice)
 def obtener_vertice(id: int, service=Depends(get_simulacion_service)):
@@ -33,13 +44,4 @@ def obtener_vertice(id: int, service=Depends(get_simulacion_service)):
     return MapeadorVertice.a_dto(vertice)
 
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
-def obtener_vertices_hashmap(service=Depends(get_simulacion_service)):
-    """
-    Devuelve el hashmap de vértices (ID → Objeto Vertice serializable).
-    """
-    hashmap = service.obtener_vertices_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay vertices en el sistema")
-    hashmap_dto = {str(k): MapeadorVertice.a_dto(v).model_dump() for k, v in hashmap.items()}
-    return RespuestaHashMap(hashmap=hashmap_dto)
+
