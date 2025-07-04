@@ -35,8 +35,8 @@ Considerar estaciones de recarga si la energía del dron no alcanza.
 Solo usar algoritmos BFS,DFS y Topological Sort para búsqueda de caminos.
 
 2. Simulación funcional
-Simulación inicial con 15 vertices, 20 aristas y 10 órdenes.
-Soporta hasta 150 vertices y 300 aristas y 500 órdenes como máximo.
+Simulación inicial con 15 vertices, 20 aristas y 10 Pedidos.
+Soporta hasta 150 vertices y 300 aristas y 500 Pedidos como máximo.
 Optimizar uso de memoria y estructura de datos (AVL, mapas, grafos).
 
 3. Análisis estadístico
@@ -57,7 +57,7 @@ Propósito: Permitir la configuración e inicio de la simulación con parámetro
 Componentes:
 • Slider: número de vertices (n_vertices, entre 10 y 150).
 • Slider: número de aristas (m_aristas, entre 10 y 300).
-• Slider: número de órdenes (n_pedidos, entre 10 y 300).
+• Slider: número de Pedidos (n_pedidos, entre 10 y 300).
 • Campo informativo: Texto informativo indicando la cantidad de vertices cliente, almacenamiento, abastecimiento y su porcentaje.
 • Botón: Start Simulation (Inicia la simulación)
 
@@ -105,7 +105,7 @@ Propósito: Listar los clientes activos y los pedidos generados, mostrando atrib
 Componentes:
 • Subsección: lista de clientes (st . j son)
     • Cliente: ID, nombre, tipo, total de pedidos O
-• Subsección: lista de órdenes (st . j son)
+• Subsección: lista de Pedidos (st . j son)
     • Pedido: ID, cliente asociado,cliente ID, origen, destino, status,fecha de creación, prioridad, fecha entrega, costo total.
 
 Validaciones:
@@ -155,7 +155,7 @@ Simulation	             //        Controlador principal de la simulación      /
 Simulationlnitializer	 //       Generación de grafos conectados y roles      //       sim/
 Route, Order, Client	 //       Representan las entidades del sistema        //       domain/
 AVL	                     //       Almacena rutas más frecuentes                //     tda/
-Map (hash map propio)	 //       Acceso 0(1) a clientes y órdenes             //       tda/
+Map (hash map propio)	 //       Acceso 0(1) a clientes y Pedidos             //       tda/
 NetworkXAdapter	         //       Adaptador visual de grafos para visual/      //      matplotlib
 AVLVisualizer	         //       Dibuja gráficamente el árbol AVL visual/     //     dashboard.py  
 

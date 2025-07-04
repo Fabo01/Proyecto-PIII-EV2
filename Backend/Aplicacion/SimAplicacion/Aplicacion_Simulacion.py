@@ -47,6 +47,9 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
     def obtener_pedidos(self):
         return self._serv.obtener_pedidos()
 
+    def obtener_rutas(self):
+        return self._serv.obtener_rutas()
+
     def set_estrategia_ruta(self, estrategia):
         return self._serv.set_estrategia_ruta(estrategia)
 
@@ -62,6 +65,14 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
     def obtener_rutas_mas_frecuentes(self, top: int = 5):
         return self._serv.obtener_rutas_mas_frecuentes(top)
 
+    def obtener_algoritmos(self) -> list:
+        """Devuelve la lista de algoritmos de ruta disponibles."""
+        return self._serv.obtener_algoritmos()
+
+    def obtener_snapshot(self, tipo: str) -> dict:
+        """Devuelve el snapshot serializado del grafo según tipo ('n-1' o 'm_aristas')."""
+        return self._serv.obtener_snapshot(tipo)
+
     def obtener_rutas_hashmap(self):
         orig = self._serv.obtener_rutas_hashmap()
         return {str(k): v for k, v in (orig or {}).items()}
@@ -74,21 +85,56 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
         orig = self._serv.obtener_aristas_hashmap()
         return {str(k): v for k, v in (orig or {}).items()}
 
+    def obtener_clientes_hashmap_serializable(self):
+        """Devuelve clientes serializables para la API usando el mapeador."""
+        from Backend.API.Mapeadores.MapeadorCliente import MapeadorCliente
+        return MapeadorCliente.lista_a_dto(self.obtener_clientes())
+
     def obtener_clientes_hashmap(self):
-        orig = self._serv.obtener_clientes_hashmap()
-        return {str(k): v for k, v in (orig or {}).items()}
+        """Devuelve clientes como objetos reales (hashmap)."""
+        return self.simulacion.repo_clientes.obtener_hashmap()
+
+    def obtener_almacenamientos_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
+        return MapeadorAlmacenamiento.lista_a_dto(self.obtener_almacenamientos())
 
     def obtener_almacenamientos_hashmap(self):
-        orig = self._serv.obtener_almacenamientos_hashmap()
-        return {str(k): v for k, v in (orig or {}).items()}
+        return self.simulacion.repo_almacenamientos.obtener_hashmap()
+
+    def obtener_recargas_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
+        return MapeadorRecarga.lista_a_dto(self.obtener_recargas())
 
     def obtener_recargas_hashmap(self):
-        orig = self._serv.obtener_recargas_hashmap()
-        return {str(k): v for k, v in (orig or {}).items()}
+        return self.simulacion.repo_recargas.obtener_hashmap()
+
+    def obtener_vertices_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
+        return MapeadorVertice.lista_a_dto(self.obtener_vertices())
+
+    def obtener_vertices_hashmap(self):
+        return self.simulacion.repo_vertices.obtener_hashmap()
+
+    def obtener_aristas_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorArista import MapeadorArista
+        return MapeadorArista.lista_a_dto(self.obtener_aristas())
+
+    def obtener_aristas_hashmap(self):
+        return self.simulacion.repo_aristas.obtener_hashmap()
+
+    def obtener_pedidos_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
+        return MapeadorPedido.lista_a_dto(self.obtener_pedidos())
 
     def obtener_pedidos_hashmap(self):
-        orig = self._serv.obtener_pedidos_hashmap()
-        return {str(k): v for k, v in (orig or {}).items()}
+        return self.simulacion.repo_pedidos.obtener_hashmap()
+
+    def obtener_rutas_hashmap_serializable(self):
+        from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
+        return MapeadorRuta.lista_a_dto(self.obtener_rutas())
+
+    def obtener_rutas_hashmap(self):
+        return self.simulacion.repo_rutas.obtener_hashmap()
 
     def estado_actual(self):
         return {
@@ -115,12 +161,18 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
 
     def listar_rutas(self):
         try:
-            return self._serv.obtener_rutas_mas_frecuentes()
+            return self.obtener_rutas()
         except Exception:
             return []
 
     def obtener_estadisticas(self):
-        return self._serv.obtener_estadisticas()
+        est = self._serv.obtener_estadisticas()
+        # Asegurar que las claves de mapas sean cadenas (Pydantic exige Dict[str, int])
+        if 'pedidos_por_cliente' in est:
+            est['pedidos_por_cliente'] = {str(k): v for k, v in est['pedidos_por_cliente'].items()}
+        if 'vertices_mas_visitados' in est:
+            est['vertices_mas_visitados'] = {str(k): v for k, v in est['vertices_mas_visitados'].items()}
+        return est
 
     def obtener_cliente(self, id_cliente: int):
         return self._serv.obtener_cliente(id_cliente)
@@ -143,3 +195,26 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
     def reiniciar_todo(self):
         return self._serv.reiniciar_todo()
 
+    def calcular_ruta(self, id_pedido: int, algoritmo: str = None):
+        """Calcula ruta individual para un pedido con algoritmo específico"""
+        return self._serv.calcular_ruta(id_pedido, algoritmo)
+
+    def calcular_ruta_todos(self, id_pedido: int):
+        """Calcula rutas con todos los algoritmos para un pedido"""
+        return self._serv.calcular_rutas_todos(id_pedido)
+
+    def calcular_rutas_algoritmos(self, id_pedido: int):
+        """Calcula todas las rutas de todos los pedidos con todos los algoritmos"""
+        return self._serv.calcular_rutas_algoritmos(id_pedido)
+
+    def floydwarshall_para_todos_los_pedidos(self):
+        """Calcula rutas óptimas con Floyd-Warshall para todos los pedidos"""
+        return self._serv.floydwarshall_para_todos_los_pedidos()
+
+    def entregar_pedido(self, id_pedido: int):
+        """Marca un pedido como entregado"""
+        return self._serv.entregar_pedido(id_pedido)
+
+    def calcular_mst_kruskal(self):
+        """Calcula el Árbol de Expansión Mínima usando Kruskal"""
+        return self._serv.calcular_mst_kruskal()

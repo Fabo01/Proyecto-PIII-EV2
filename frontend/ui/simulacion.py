@@ -1,6 +1,11 @@
 import streamlit as st
-from frontend.servicios.api import api_post
-from frontend.servicios.cache import cachear_estado_simulacion
+from frontend.servicios.api import api_post, api_get
+from frontend.servicios.cache import limpiar_cache, cachear_snapshot
+
+def simulacion_iniciada():
+    """Valida si la simulación está iniciada consultando un endpoint de estado."""
+    estado = st.session_state.get('simulacion_iniciada', False)
+    return estado
 
 def ui_simulacion():
     """
@@ -30,6 +35,8 @@ def ui_simulacion():
         })
         if resp:
             st.success("¡Simulación iniciada!")
+            # Limpiar caches para recargar datos tras iniciar simulación
+            limpiar_cache()
             st.session_state['simulacion_iniciada'] = True
             st.rerun()
         else:

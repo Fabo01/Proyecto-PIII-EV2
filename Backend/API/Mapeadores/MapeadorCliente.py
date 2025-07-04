@@ -2,32 +2,48 @@
 MapeadorCliente: Convierte entre modelo de dominio Cliente y ClienteResponse DTO.
 """
 from Backend.Dominio.Dominio_Cliente import Cliente
-from Backend.API.DTOs.DTOsRespuesta.RespuestaCliente import RespuestaCliente
 from Backend.Dominio.Interfaces.IntMapeadores.IMapeadorDominioDTO import IMapeadorDominioDTO
+from Backend.Infraestructura.Repositorios.repositorio_pedidos import RepositorioPedidos
+from Backend.API.DTOs.DTOsRespuesta.RespuestaCliente import RespuestaCliente
 
 class MapeadorCliente(IMapeadorDominioDTO):
     """
     Clase para mapear objetos Cliente del dominio a DTOs de respuesta.
     """
     @staticmethod
-    def a_dto(cliente: Cliente, incluir_pedidos: bool = True) -> RespuestaCliente:
+    def a_dto(cliente: Cliente) -> RespuestaCliente:
         """
-        Convierte un objeto Cliente a un RespuestaCliente DTO.
-        Los pedidos serializados en un cliente nunca deben incluir el cliente completo, solo datos básicos.
-        Args:
-            cliente (Cliente): Objeto de dominio Cliente.
-            incluir_pedidos (bool): Si True, mapea los pedidos asociados (como objetos completos, pero sin el cliente completo dentro de cada pedido).
-        Returns:
-            RespuestaCliente: DTO listo para API.
+        Serializa un cliente a un dict plano, incluyendo los campos id, tipo, nombre y total de pedidos.
         """
-        pedidos = []
-        if incluir_pedidos and hasattr(cliente, 'pedidos'):
-            # Importación local para evitar ciclo
-            from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
-            pedidos = [MapeadorPedido.a_dto(p, incluir_cliente=False, incluir_almacenamiento=True) for p in getattr(cliente, 'pedidos', [])]
-        return RespuestaCliente(
-            id=int(getattr(cliente, 'id_cliente', 0)),
-            tipo=str(getattr(cliente, 'tipo_elemento', 'cliente')),
-            nombre=str(getattr(cliente, 'nombre', '')),
-            pedidos=pedidos
-        )
+        # campos básicos
+        cliente_id = int(getattr(cliente, 'id_cliente', 0))
+        tipo = str(getattr(cliente, 'tipo_elemento', 'cliente'))
+        nombre = str(getattr(cliente, 'nombre', ''))
+        # total de pedidos asociados
+        try:
+            pedidos = RepositorioPedidos().obtener_por_cliente(cliente_id)
+        except Exception:
+            pedidos = []
+        # convertir lista de pedidos a dicts planos con id
+        lista_pedidos = [getattr(p, 'id_pedido', None) for p in pedidos]
+        return RespuestaCliente(id=cliente_id, tipo=tipo, nombre=nombre, pedidos=lista_pedidos)
+
+    @staticmethod
+    def a_hashmap(cliente: Cliente) -> Cliente:
+        """
+        Devuelve el objeto real Cliente (sin serialización).
+        """
+        return cliente
+
+    @staticmethod
+    def lista_a_dto(clientes):
+        if not clientes:
+            return []
+        return [MapeadorCliente.a_dto(c) for c in clientes if c is not None]
+
+    @staticmethod
+    def lista_a_hashmap(clientes):
+        """
+        Devuelve una lista de objetos reales Cliente.
+        """
+        return [MapeadorCliente.a_hashmap(c) for c in clientes]

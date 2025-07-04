@@ -3,9 +3,9 @@ RepositorioAlmacenamientos: Acceso centralizado y unico a instancias de Almacena
 Utiliza HashMap para acceso O(1) y garantiza instanciacion unica.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Dominio.Interfaces.IntRepos.IRepositorioAlmacenamientos import IRepositorioAlmacenamientos
+from Backend.Dominio.Interfaces.IntRepos.IRepositorio import IRepositorio
 
-class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
+class RepositorioAlmacenamientos(IRepositorio):
     """
     Repositorio para gestionar instancias unicas de Almacenamiento.
     Garantiza unicidad y acceso O(1) mediante HashMap.
@@ -33,11 +33,40 @@ class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
 
     def agregar(self, almacen):
         """
-        Agrega una nueva instancia de Almacenamiento al repositorio.
-        :param almacen: Instancia de Almacenamiento a agregar.
+        Agrega una nueva instancia de Almacenamiento al repositorio asegurando unicidad.
+        Si el almacenamiento ya existe, retorna la instancia existente.
+        Si el almacenamiento es nuevo, lo agrega y asocia sus pedidos reales si existen.
         """
+        existente = self._almacenamientos.buscar(almacen.id_almacenamiento)
+        if existente:
+            # Si el almacenamiento ya existe, fusionar pedidos si hay nuevos
+            nuevos_pedidos = [p for p in getattr(almacen, '_pedidos', []) if p not in existente._pedidos]
+            for pedido in nuevos_pedidos:
+                existente.agregar_pedido(pedido)
+            self.notificar_observadores('repositorio_almacenamientos_agregado_duplicado', {'almacen': existente})
+            return existente
+        # Si es nuevo, asegurar que los pedidos asociados sean objetos reales
+        if hasattr(almacen, '_pedidos'):
+            pedidos_reales = []
+            for pedido in almacen._pedidos:
+                if hasattr(pedido, 'id_pedido'):
+                    pedidos_reales.append(pedido)
+            almacen._pedidos = pedidos_reales
         self._almacenamientos.insertar(almacen.id_almacenamiento, almacen)
         self.notificar_observadores('repositorio_almacenamientos_agregado', {'almacen': almacen})
+        return almacen
+
+    def asociar_pedido_a_almacenamiento(self, id_almacenamiento, pedido):
+        """
+        Asocia un objeto Pedido real a un almacenamiento existente en el repositorio.
+        Si el almacenamiento no existe, no hace nada.
+        :param id_almacenamiento: Identificador unico del almacenamiento.
+        :param pedido: Objeto Pedido a asociar.
+        """
+        almacen = self._almacenamientos.buscar(id_almacenamiento)
+        if almacen is not None:
+            almacen.agregar_pedido(pedido)
+            self.notificar_observadores('repositorio_almacenamientos_pedido_asociado', {'id_almacenamiento': id_almacenamiento, 'id_pedido': getattr(pedido, 'id_pedido', None)})
 
     def obtener(self, id_almacenamiento):
         """
@@ -80,3 +109,20 @@ class RepositorioAlmacenamientos(IRepositorioAlmacenamientos):
         """
         self.notificar_observadores('repositorio_almacenamientos_hashmap', None)
         return dict(self._almacenamientos.items())
+
+    def obtener_hashmap_serializable(self):
+        """
+        Retorna el hashmap de almacenamientos serializado como dict plano usando MapeadorAlmacenamiento.
+        :return: Dict con almacenamientos serializados para API.
+        """
+        try:
+            from Backend.API.Mapeadores.MapeadorAlmacenamiento import MapeadorAlmacenamiento
+            resultado = {}
+            for id_alm, almacen in self._almacenamientos.items():
+                resultado[str(id_alm)] = MapeadorAlmacenamiento.a_hashmap(almacen)
+            self.notificar_observadores('repositorio_almacenamientos_hashmap_serializable', {'total': len(resultado)})
+            return resultado
+        except Exception as e:
+            import logging
+            logging.getLogger("RepositorioAlmacenamientos").error(f"Error generando hashmap serializable: {e}")
+            return {}

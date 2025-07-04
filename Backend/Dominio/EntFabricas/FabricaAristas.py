@@ -26,10 +26,19 @@ class FabricaAristas(FabricaInterfaz):
         """
         Crea una arista entre dos vértices y la registra en el repositorio si no existe.
         """
-        clave = (
-            getattr(origen.elemento, 'id_cliente', None) or getattr(origen.elemento, 'id_almacenamiento', None) or getattr(origen.elemento, 'id_recarga', None),
-            getattr(destino.elemento, 'id_cliente', None) or getattr(destino.elemento, 'id_almacenamiento', None) or getattr(destino.elemento, 'id_recarga', None)
-        )
+        # Obtener identificadores sin descartar valores 0
+        id_cliente_ori = getattr(origen.elemento, 'id_cliente', None)
+        id_alm_ori = getattr(origen.elemento, 'id_almacenamiento', None)
+        id_rec_ori = getattr(origen.elemento, 'id_recarga', None)
+        id_origen = id_cliente_ori if id_cliente_ori is not None else id_alm_ori if id_alm_ori is not None else id_rec_ori
+        id_cliente_dest = getattr(destino.elemento, 'id_cliente', None)
+        id_alm_dest = getattr(destino.elemento, 'id_almacenamiento', None)
+        id_rec_dest = getattr(destino.elemento, 'id_recarga', None)
+        id_destino = id_cliente_dest if id_cliente_dest is not None else id_alm_dest if id_alm_dest is not None else id_rec_dest
+        if id_origen is None or id_destino is None:
+            self.logger.warning(f"Intento de crear arista con ID None: origen={id_origen}, destino={id_destino}. Creación abortada.")
+            return None
+        clave = (id_origen, id_destino)
         repo = RepositorioAristas()
         existente = repo.obtener(clave)
         if existente:

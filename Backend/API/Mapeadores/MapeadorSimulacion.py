@@ -1,5 +1,5 @@
 """
-MapeadorSimulacion: Convierte el estado de la simulación a RespuestaSimulacionEstado DTO.
+MapeadorSimulacion: Convierte el estado de la simulación a RespuestaSimulacionEstado DTO y a hashmaps de objetos reales.
 """
 from Backend.API.DTOs.DTOsRespuesta.RespuestaSimulacionEstado import RespuestaSimulacionEstado
 from Backend.API.Mapeadores.MapeadorCliente import MapeadorCliente
@@ -10,16 +10,12 @@ from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 
 class MapeadorSimulacion:
     """
-    Clase para mapear el estado de la simulación (dict o modelo) a un DTO de respuesta para la API.
+    Clase para mapear el estado de la simulación (dict o modelo) a un DTO de respuesta para la API o a hashmaps de objetos reales.
     """
     @staticmethod
     def a_dto_estado(estado: dict) -> RespuestaSimulacionEstado:
         """
-        Convierte el estado de la simulación a un objeto RespuestaSimulacionEstado.
-        Args:
-            estado (dict): Estado de la simulación, con claves: clientes, almacenamientos, recargas, pedidos, rutas, estado, mensaje.
-        Returns:
-            RespuestaSimulacionEstado: DTO listo para la API.
+        Convierte el estado de la simulación a un objeto RespuestaSimulacionEstado (solo datos planos para la API).
         """
         import logging
         logger = logging.getLogger("MapeadorSimulacion")
@@ -42,3 +38,10 @@ class MapeadorSimulacion:
             estado=estado.get('estado', ''),
             mensaje=estado.get('mensaje', None)
         )
+
+    @staticmethod
+    def a_hashmap_estado(estado: dict) -> dict:
+        """
+        Devuelve el estado de la simulación como un dict de objetos reales (o dicts con objetos reales), para uso interno o pruebas.
+        """
+        return estado

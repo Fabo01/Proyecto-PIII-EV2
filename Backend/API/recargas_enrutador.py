@@ -13,24 +13,28 @@ def get_simulacion_service():
 @router.get("/", response_model=List[RespuestaRecarga])
 def listar_recargas(service=Depends(get_simulacion_service)):
     """
-    Devuelve la lista de estaciones de recarga registradas en la simulación.
+    Devuelve la lista de recargas registradas en la simulación.
     """
     recargas = service.obtener_recargas()
     if recargas is None:
         raise HTTPException(status_code=404, detail="No hay recargas registradas")
-    return [MapeadorRecarga.a_dto(r) for r in recargas]
+    return MapeadorRecarga.lista_a_dto(recargas)
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
+@router.get("/hashmap", response_model=dict)
 def recargas_hashmap(service=Depends(get_simulacion_service)):
     """
-    Devuelve el hashmap de recargas (ID → Objeto Recarga serializable).
+    Devuelve el hashmap de recargas (ID → Objeto Recarga serializable plano).
     """
-    hashmap = service.obtener_recargas_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay recargas en el sistema")
-    from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
-    hashmap_dto = {str(k): MapeadorRecarga.a_dto(v).model_dump() for k, v in hashmap.items()}
-    return RespuestaHashMap(hashmap=hashmap_dto)
+    recargas = service.obtener_recargas()
+    return {r.id_recarga: MapeadorRecarga.a_hashmap(r) for r in recargas}
+
+@router.get("/hashmap/lista", response_model=List[dict])
+def recargas_hashmap_lista(service=Depends(get_simulacion_service)):
+    """
+    Devuelve una lista de objetos de recarga en formato hashmap para depuración avanzada.
+    """
+    recargas = service.obtener_recargas()
+    return MapeadorRecarga.lista_a_hashmap(recargas)
 
 @router.get("/{id}", response_model=RespuestaRecarga)
 def obtener_recarga(id: int, service=Depends(get_simulacion_service)):
@@ -41,6 +45,17 @@ def obtener_recarga(id: int, service=Depends(get_simulacion_service)):
     if recarga is None:
         raise HTTPException(status_code=404, detail="Recarga no encontrada")
     return MapeadorRecarga.a_dto(recarga)
+
+@router.get("/{id}/hashmap", response_model=dict)
+def obtener_recarga_hashmap(id: int, service=Depends(get_simulacion_service)):
+    """
+    Devuelve una estación de recarga por su id en formato hashmap, para obtener
+    todos sus atributos de forma plana.
+    """
+    recarga = service.obtener_recarga(id)
+    if recarga is None:
+        raise HTTPException(status_code=404, detail="Recarga no encontrada")
+    return MapeadorRecarga.a_hashmap(recarga)
 
 @router.post("/crear", response_model=RespuestaRecarga)
 def crear_recarga(dto: dict, service=Depends(get_simulacion_service)):

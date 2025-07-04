@@ -39,7 +39,11 @@ class Grafo:
         Inserta un vértice único para el elemento dado, usando la fábrica y el repositorio centralizado.
         Si ya existe, retorna la instancia existente.
         """
-        id_elemento = getattr(elemento, 'id_cliente', None) or getattr(elemento, 'id_almacenamiento', None) or getattr(elemento, 'id_recarga', None)
+        # Obtener identificador sin descartar valores 0
+        id_cliente = getattr(elemento, 'id_cliente', None)
+        id_almacenamiento = getattr(elemento, 'id_almacenamiento', None)
+        id_recarga = getattr(elemento, 'id_recarga', None)
+        id_elemento = id_cliente if id_cliente is not None else id_almacenamiento if id_almacenamiento is not None else id_recarga
         vertice = self._repositorio_vertices.obtener(id_elemento)
         if vertice is None:
             vertice = FabricaVertices().crear(elemento)
@@ -51,7 +55,11 @@ class Grafo:
         return vertice
 
     def buscar_vertice_por_elemento(self, elemento):
-        id_elemento = getattr(elemento, 'id_cliente', None) or getattr(elemento, 'id_almacenamiento', None) or getattr(elemento, 'id_recarga', None)
+        # Obtener identificador sin descartar valores 0
+        id_cliente = getattr(elemento, 'id_cliente', None)
+        id_almacenamiento = getattr(elemento, 'id_almacenamiento', None)
+        id_recarga = getattr(elemento, 'id_recarga', None)
+        id_elemento = id_cliente if id_cliente is not None else id_almacenamiento if id_almacenamiento is not None else id_recarga
         return self._repositorio_vertices.obtener(id_elemento)
 
     def insertar_arista(self, u, v, peso):
@@ -173,7 +181,11 @@ class Grafo:
         """
         if hasattr(v, 'id_elemento'):
             return v.id_elemento()
-        return getattr(v, 'id_cliente', None) or getattr(v, 'id_almacenamiento', None) or getattr(v, 'id_recarga', None)
+        # Obtener identificador sin descartar valores 0
+        id_cliente = getattr(v, 'id_cliente', None)
+        id_almacenamiento = getattr(v, 'id_almacenamiento', None)
+        id_recarga = getattr(v, 'id_recarga', None)
+        return id_cliente if id_cliente is not None else id_almacenamiento if id_almacenamiento is not None else id_recarga
 
     def serializar(self):
         """
@@ -183,5 +195,15 @@ class Grafo:
         return {
             'vertices': [v.serializar() for v in self.vertices()],
             'aristas': [a.serializar() for a in self.aristas()],
+            'dirigido': self._dirigido
+        }
+
+    def snapshot(self):
+        """
+        Devuelve un snapshot serializado del grafo actual (vertices y aristas).
+        """
+        return {
+            'vertices': [v.serializar() if hasattr(v, 'serializar') else str(v) for v in self.vertices()],
+            'aristas': [a.serializar() if hasattr(a, 'serializar') else str(a) for a in self.aristas()],
             'dirigido': self._dirigido
         }

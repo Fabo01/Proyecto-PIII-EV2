@@ -20,62 +20,44 @@ def listar_clientes(service=Depends(get_simulacion_service)):
     clientes = service.obtener_clientes()
     if clientes is None:
         raise HTTPException(status_code=404, detail="No hay clientes registrados")
-    return [MapeadorCliente.a_dto(c) for c in clientes]
+    return MapeadorCliente.lista_a_dto(clientes)
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
+@router.get("/hashmap", response_model=dict)
 def clientes_hashmap(service=Depends(get_simulacion_service)):
     """
-    Devuelve el hashmap de clientes (ID → Objeto Cliente serializable).
+    Devuelve el hashmap de clientes (ID → Objeto Cliente serializable plano).
     """
-    hashmap = service.obtener_clientes_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay clientes en el sistema")
-    # Mapear Cliente a DTO serializable
-    hashmap_dto = {str(k): MapeadorCliente.a_dto(v).model_dump() for k, v in hashmap.items()}
-    return RespuestaHashMap(hashmap=hashmap_dto)
+    clientes = service.obtener_clientes()
+    # Devuelve objetos reales para debug avanzado
+    return {c.id_cliente: MapeadorCliente.a_hashmap(c) for c in clientes}
+
+@router.get("/hashmap/lista", response_model=List[dict])
+def clientes_hashmap_lista(service=Depends(get_simulacion_service)):
+    """
+    Devuelve una lista de hashes de clientes para debug avanzado.
+    """
+    clientes = service.obtener_clientes()
+    return MapeadorCliente.lista_a_hashmap(clientes)
 
 @router.get("/{id}", response_model=RespuestaCliente)
 def obtener_cliente(id: int, service=Depends(get_simulacion_service)):
     """
     Devuelve un cliente por su id, usando el servicio y mapeador.
     """
-    cliente = service.buscar_cliente(id)
+    cliente = service.obtener_cliente(id)
     if cliente is None:
         raise HTTPException(status_code=404, detail="Cliente no encontrado")
     return MapeadorCliente.a_dto(cliente)
 
-@router.post("/crear", response_model=RespuestaCliente)
-def crear_cliente(dto: dict, service=Depends(get_simulacion_service)):
+@router.get("/{id}/hashmap", response_model=dict)
+def obtener_cliente_hashmap(id: int, service=Depends(get_simulacion_service)):
     """
-    Crea un nuevo cliente a partir de los datos recibidos.
+    Devuelve un cliente por su id como un objeto hash para debug avanzado.
     """
-    try:
-        cliente = service.crear_cliente(dto)
-        return MapeadorCliente.a_dto(cliente)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al crear cliente: {str(e)}")
-
-@router.patch("/{id}", response_model=RespuestaCliente)
-def actualizar_cliente(id: int, dto: dict, service=Depends(get_simulacion_service)):
-    """
-    Actualiza los datos de un cliente existente.
-    """
-    try:
-        cliente = service.actualizar_cliente(id, dto)
-        return MapeadorCliente.a_dto(cliente)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al actualizar cliente: {str(e)}")
-
-@router.delete("/{id}", response_model=dict)
-def eliminar_cliente(id: int, service=Depends(get_simulacion_service)):
-    """
-    Elimina un cliente por su id.
-    """
-    try:
-        service.eliminar_cliente(id)
-        return {"mensaje": "Cliente eliminado correctamente"}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Error al eliminar cliente: {str(e)}")
+    cliente = service.obtener_cliente(id)
+    if cliente is None:
+        raise HTTPException(status_code=404, detail="Cliente no encontrado")
+    return MapeadorCliente.a_hashmap(cliente)
 
 @router.get("/con_pedidos/{id_almacen}", response_model=List[RespuestaCliente])
 def clientes_con_pedidos_en_almacen(id_almacen: int, service=Depends(get_simulacion_service)):
@@ -90,9 +72,9 @@ def pedidos_por_cliente(id_cliente: int, service=Depends(get_simulacion_service)
     """
     Devuelve los pedidos asociados a un cliente específico.
     """
-    pedidos = service.obtener_pedidos_por_cliente(id_cliente)
+    pedidos = service.obtener_por_cliente(id_cliente)
     if pedidos is None:
-        raise HTTPException(status_code=404, detail="No hay pedidos para el cliente especificado")
+        return []
     return [MapeadorPedido.a_dto(p) for p in pedidos]
 
 @router.get("/{id_cliente}/pedidos_en_almacen/{id_almacen}", response_model=List[RespuestaPedido])

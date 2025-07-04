@@ -1,16 +1,25 @@
 """
 Clase Pedido para representar un pedido en la simulacion logistica de drones.
-Incluye soporte para observadores de eventos de dominio.
+Incluye soporte para observadores de eventos de dominio y logging de asociaciones.
 """
 
 from datetime import datetime
+import logging
 
 class Pedido:
     """
     Representa un pedido realizado por un cliente.
     La gestion de pedidos es independiente de la logica de Cliente y Vertice.
-    Permite agregar observadores para auditar eventos de negocio.
+    Permite agregar observadores para auditar eventos de negocio y loguea asociaciones.
     """
+    logger = logging.getLogger("Dominio.Pedido")
+    if not logger.hasHandlers():
+        handler = logging.StreamHandler()
+        formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s')
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
     def __init__(self, id_pedido, cliente_v, origen_v, destino_v, prioridad, fecha_creacion=None):
         self.id_pedido = id_pedido
         self.cliente = cliente_v
@@ -23,6 +32,7 @@ class Pedido:
         self.status = 'pendiente'
         self.fecha_entrega = None
         self._observadores = set()
+        Pedido.logger.info(f"[Pedido] Creado: id={id_pedido} | cliente={cliente_v} | origen={origen_v} | destino={destino_v} | prioridad={prioridad}")
         self.notificar_observadores('pedido_creado', {'id_pedido': id_pedido, 'cliente': cliente_v, 'origen': origen_v, 'destino': destino_v, 'prioridad': prioridad, 'fecha_creacion': self.fecha_creacion})
 
     def agregar_observador(self, observador):
@@ -34,30 +44,36 @@ class Pedido:
     def notificar_observadores(self, evento, datos=None):
         for obs in self._observadores:
             obs.actualizar(evento, self, datos)
+        Pedido.logger.info(f"[Pedido] Notificación: evento={evento} | datos={datos}")
 
     def obtener_cliente(self):
         """
         Retorna el cliente asociado a este pedido.
         """
-        return self.cliente.elemento if self.cliente and hasattr(self.cliente, 'elemento') else None
+        c = self.cliente.elemento if self.cliente and hasattr(self.cliente, 'elemento') else None
+        Pedido.logger.debug(f"[Pedido] obtener_cliente: {c}")
+        return c
 
     def obtener_origen(self):
         """
         Retorna el vertice de origen (almacenamiento) asociado a este pedido.
-        Siempre retorna la referencia única del objeto Vertice.
         """
-        return self.origen.elemento if self.origen and hasattr(self.origen, 'elemento') else None
+        o = self.origen.elemento if self.origen and hasattr(self.origen, 'elemento') else None
+        Pedido.logger.debug(f"[Pedido] obtener_origen: {o}")
+        return o
 
     def obtener_destino(self):
         """
         Retorna el vertice de destino (cliente) asociado a este pedido.
-        Siempre retorna la referencia única del objeto Vertice.
         """
-        return self.destino.elemento if self.destino and hasattr(self.destino, 'elemento') else None
+        d = self.destino.elemento if self.destino and hasattr(self.destino, 'elemento') else None
+        Pedido.logger.debug(f"[Pedido] obtener_destino: {d}")
+        return d
 
     def asignar_ruta(self, ruta, peso_total):
         self.ruta = ruta
         self.peso_total = peso_total
+        Pedido.logger.info(f"[Pedido] Ruta asignada: id={self.id_pedido} | ruta={ruta} | peso_total={peso_total}")
         self.status = 'enviado'
         self.notificar_observadores('pedido_ruta_asignada', {'ruta': ruta, 'peso_total': peso_total})
 
@@ -82,8 +98,28 @@ class Pedido:
         return resultado
 
     def serializar(self):
-        self.notificar_observadores('pedido_serializado', None)
-        return {'id_pedido': self.id_pedido, 'cliente': str(self.cliente), 'origen': str(self.origen), 'destino': str(self.destino), 'prioridad': self.prioridad, 'status': self.status}
+        """
+        Serializa el pedido en un dict plano, evitando referencias circulares.
+        """
+        id_cliente = None
+        if hasattr(self.cliente, 'elemento') and hasattr(self.cliente.elemento, 'id_cliente'):
+            id_cliente = self.cliente.elemento.id_cliente
+        id_almacenamiento = None
+        if hasattr(self.origen, 'elemento') and hasattr(self.origen.elemento, 'id_almacenamiento'):
+            id_almacenamiento = self.origen.elemento.id_almacenamiento
+        id_destino = None
+        if hasattr(self.destino, 'elemento') and hasattr(self.destino.elemento, 'id_cliente'):
+            id_destino = self.destino.elemento.id_cliente
+        return {
+            'id_pedido': self.id_pedido,
+            'cliente_id': id_cliente,
+            'origen_id': id_almacenamiento,
+            'destino_id': id_destino,
+            'prioridad': self.prioridad,
+            'status': self.status,
+            'fecha_creacion': str(self.fecha_creacion),
+            'fecha_entrega': str(self.fecha_entrega) if self.fecha_entrega else None
+        }
 
     def __str__(self):
         cliente_nombre = self.obtener_cliente().nombre if self.obtener_cliente() else 'N/A'

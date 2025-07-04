@@ -3,9 +3,9 @@ RepositorioVertices: Acceso centralizado y unico a instancias de Vertice.
 Utiliza HashMap para acceso O(1) y garantiza instanciacion unica.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Dominio.Interfaces.IntRepos.IRepositorioVertices import IRepositorioVertices
+from Backend.Dominio.Interfaces.IntRepos.IRepositorio import IRepositorio
 
-class RepositorioVertices(IRepositorioVertices):
+class RepositorioVertices(IRepositorio):
     """
     Repositorio para gestionar instancias unicas de Vertice.
     Garantiza unicidad y acceso O(1) mediante HashMap.
@@ -33,12 +33,19 @@ class RepositorioVertices(IRepositorioVertices):
 
     def agregar(self, vertice, id_elemento):
         """
-        Agrega un vertice al repositorio.
+        Agrega un vertice al repositorio asegurando unicidad.
+        Si ya existe un vertice con el mismo id_elemento, retorna la instancia existente.
         :param vertice: Instancia de Vertice a agregar.
-        :param id_elemento: Identificador unico del elemento.
+        :param id_elemento: Identificador único del elemento.
+        :return: Instancia existente o nueva de Vertice.
         """
+        existente = self._vertices.buscar(id_elemento)
+        if existente:
+            self.notificar_observadores('repositorio_vertices_agregado_duplicado', {'id_elemento': id_elemento, 'vertice': existente})
+            return existente
         self._vertices.insertar(id_elemento, vertice)
         self.notificar_observadores('repositorio_vertices_agregado', {'id_elemento': id_elemento, 'vertice': vertice})
+        return vertice
 
     def obtener(self, id_elemento):
         """
@@ -81,3 +88,20 @@ class RepositorioVertices(IRepositorioVertices):
         """
         self.notificar_observadores('repositorio_vertices_hashmap', None)
         return dict(self._vertices.items())
+
+    def obtener_hashmap_serializable(self):
+        """
+        Retorna el hashmap de vertices serializado como dict plano usando MapeadorVertice.
+        :return: Diccionario de vertices serializados.
+        """
+        try:
+            from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
+            resultado = {}
+            for id_el, vert in self._vertices.items():
+                resultado[str(id_el)] = MapeadorVertice.a_hashmap(vert)
+            self.notificar_observadores('repositorio_vertices_hashmap_serializable', {'total': len(resultado)})
+            return resultado
+        except Exception as e:
+            import logging
+            logging.getLogger("RepositorioVertices").error(f"Error generando hashmap serializable: {e}")
+            return {}

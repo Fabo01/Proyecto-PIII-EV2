@@ -69,11 +69,14 @@ class Almacenamiento:
 
     def serializar(self):
         """
-        Prepara los datos del almacenamiento para ser serializados.
-        Notifica a los observadores que el almacenamiento ha sido serializado.
+        Serializa el almacenamiento como dict plano, incluyendo solo los IDs de pedidos asociados.
         """
-        self.notificar_observadores('almacenamiento_serializado', None)
-        return {'id_almacenamiento': self.id_almacenamiento, 'nombre': self.nombre, 'total_pedidos': self.total_pedidos()}
+        return {
+            'id': self.id_almacenamiento,
+            'tipo': self.tipo_elemento,
+            'nombre': self.nombre,
+            'ids_pedidos': [getattr(p, 'id_pedido', None) for p in self._pedidos if hasattr(p, 'id_pedido')]
+        }
 
     def __str__(self):
         return f"Almacenamiento {self.id_almacenamiento}: {self.nombre} (Pedidos: {self.total_pedidos()})"

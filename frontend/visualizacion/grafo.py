@@ -1,7 +1,16 @@
+import logging
 import streamlit as st
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.patches import Patch
+
+logger = logging.getLogger("frontend.visualizacion.grafo")
+if not logger.hasHandlers():
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(name)s - %(message)s')
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
 
 def visualizar_grafo(vertices, aristas, ruta_resaltada=None):
     """
@@ -9,13 +18,15 @@ def visualizar_grafo(vertices, aristas, ruta_resaltada=None):
     Cumple con requisitos de robustez, validación y escalabilidad.
     """
     if not vertices or not isinstance(vertices, list):
+        logger.warning("No hay vértices para mostrar en la red.")
         st.warning("No hay vértices para mostrar en la red.")
         return
     if not aristas or not isinstance(aristas, list):
+        logger.warning("No hay aristas para mostrar en la red.")
         st.warning("No hay aristas para mostrar en la red.")
         return
     # Validar estructura de los vértices
-    nodos_validos = []
+    vertices_validos = []
     tipo_color = {'cliente': 'tab:blue', 'almacenamiento': 'tab:orange', 'recarga': 'tab:green'}
     id_to_tipo = {}
     id_to_nombre = {}
@@ -24,26 +35,30 @@ def visualizar_grafo(vertices, aristas, ruta_resaltada=None):
         tipo = vertice.get('tipo', 'otro')
         nombre = vertice.get('nombre', str(vid))
         if vid is None or tipo not in tipo_color:
-            continue  # Solo mostrar nodos válidos y conocidos
-        nodos_validos.append(vid)
+            logger.warning(f"Vértice inválido detectado: {vertice}")
+            continue
+        vertices_validos.append(vid)
         id_to_tipo[vid] = tipo
         id_to_nombre[vid] = nombre
-    if not nodos_validos:
+    if not vertices_validos:
+        logger.warning("No hay vértices válidos para mostrar (clientes, almacenes o recargas).")
         st.warning("No hay vértices válidos para mostrar (clientes, almacenes o recargas).")
         return
     G = nx.DiGraph()
-    for vid in nodos_validos:
+    for vid in vertices_validos:
         G.add_node(vid, tipo=id_to_tipo[vid], nombre=id_to_nombre[vid])
-    # Validar aristas: solo entre nodos válidos
+    # Validar aristas: solo entre vertices válidos
     aristas_validas = []
     for arista in aristas:
         origen = arista.get('origen')
         destino = arista.get('destino')
         peso = arista.get('peso', 1)
-        if origen in nodos_validos and destino in nodos_validos:
-            G.add_edge(origen, destino, peso=peso)
-            aristas_validas.append((origen, destino))
+        if origen in vertices_validos and destino in vertices_validos:
+            aristas_validas.append((origen, destino, peso))
+        else:
+            logger.warning(f"Arista inválida detectada: {arista}")
     if not aristas_validas:
+        logger.warning("No hay aristas válidas para mostrar en la red.")
         st.warning("No hay aristas válidas para mostrar en la red.")
         return
     pos = nx.spring_layout(G, seed=42)

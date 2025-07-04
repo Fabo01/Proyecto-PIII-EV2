@@ -4,12 +4,13 @@ Implementación de un árbol AVL para registrar rutas y su frecuencia.
 """
 
 class verticeAVL:
-    def __init__(self, clave, valor=None):
+    def __init__(self, clave, valor=None, ruta=None):
         # Aseguro que la clave sea un hashable simple (por ejemplo, int o str)
         if isinstance(clave, tuple) and len(clave) == 1:
             clave = clave[0]
         self.clave = clave
         self.valor = valor if valor is not None else 1  # Frecuencia
+        self.ruta = ruta  # Objeto ruta completo para metadatos
         self.izquierda = None
         self.derecha = None
         self.altura = 1
@@ -34,23 +35,26 @@ class AVL:
         for obs in self._observadores:
             obs.actualizar(evento, self, datos)
 
-    def insertar(self, clave, valor=None):
+    def insertar(self, clave, valor=None, ruta=None):
         # Aseguro que la clave sea simple antes de insertar
         if isinstance(clave, tuple) and len(clave) == 1:
             clave = clave[0]
-        self.raiz = self._insertar(self.raiz, clave, valor)
-        self.notificar_observadores('avl_insertar', {'clave': clave, 'valor': valor})
+        self.raiz = self._insertar(self.raiz, clave, valor, ruta)
+        self.notificar_observadores('avl_insertar', {'clave': clave, 'valor': valor, 'ruta': ruta})
 
-    def _insertar(self, vertice, clave, valor=None):
+    def _insertar(self, vertice, clave, valor=None, ruta=None):
         if not vertice:
-            return verticeAVL(clave, valor)
+            return verticeAVL(clave, valor, ruta)
         if clave == vertice.clave:
             vertice.valor += 1 if valor is None else valor
+            # Actualizar la ruta si se proporciona una nueva
+            if ruta is not None:
+                vertice.ruta = ruta
             return vertice
         elif clave < vertice.clave:
-            vertice.izquierda = self._insertar(vertice.izquierda, clave, valor)
+            vertice.izquierda = self._insertar(vertice.izquierda, clave, valor, ruta)
         else:
-            vertice.derecha = self._insertar(vertice.derecha, clave, valor)
+            vertice.derecha = self._insertar(vertice.derecha, clave, valor, ruta)
         vertice.altura = 1 + max(self._altura(vertice.izquierda), self._altura(vertice.derecha))
         return self._balancear(vertice)
 
@@ -149,14 +153,55 @@ class AVL:
 
     def serializar(self):
         self.notificar_observadores('avl_serializado', None)
-        return self._serializar_nodo(self.raiz)
+        return self._serializar_vertice(self.raiz)
 
-    def _serializar_nodo(self, nodo):
-        if not nodo:
+    def _serializar_vertice(self, vertice):
+        if not vertice:
             return None
         return {
-            'clave': nodo.clave,
-            'valor': nodo.valor,
-            'izq': self._serializar_nodo(nodo.izquierda),
-            'der': self._serializar_nodo(nodo.derecha)
+            'clave': vertice.clave,
+            'valor': vertice.valor,
+            'ruta_id': getattr(vertice.ruta, 'id_ruta', None) if vertice.ruta else None,
+            'izq': self._serializar_vertice(vertice.izquierda),
+            'der': self._serializar_vertice(vertice.derecha)
         }
+
+    def obtener_rutas(self):
+        """
+        Obtiene todas las rutas almacenadas en el AVL.
+        Retorna lista de objetos Ruta.
+        """
+        rutas = []
+        self._obtener_rutas_inorden(self.raiz, rutas)
+        return rutas
+
+    def _obtener_rutas_inorden(self, vertice, rutas):
+        """
+        Recorre el AVL en orden y recolecta las rutas.
+        """
+        if vertice:
+            self._obtener_rutas_inorden(vertice.izquierda, rutas)
+            if vertice.ruta:
+                rutas.append(vertice.ruta)
+            self._obtener_rutas_inorden(vertice.derecha, rutas)
+
+    def obtener_rutas_mas_frecuentes(self, limite=10):
+        """
+        Obtiene las rutas más frecuentes del AVL.
+        Retorna lista de tuplas (ruta, frecuencia) ordenadas por frecuencia descendente.
+        """
+        rutas_con_frecuencia = []
+        self._obtener_rutas_con_frecuencia(self.raiz, rutas_con_frecuencia)
+        # Ordenar por frecuencia descendente
+        rutas_con_frecuencia.sort(key=lambda x: x[1], reverse=True)
+        return rutas_con_frecuencia[:limite]
+
+    def _obtener_rutas_con_frecuencia(self, vertice, resultado):
+        """
+        Recorre el AVL y recolecta rutas con su frecuencia.
+        """
+        if vertice:
+            self._obtener_rutas_con_frecuencia(vertice.izquierda, resultado)
+            if vertice.ruta:
+                resultado.append((vertice.ruta, vertice.valor))
+            self._obtener_rutas_con_frecuencia(vertice.derecha, resultado)

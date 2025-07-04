@@ -1,5 +1,5 @@
 import requests
-import streamlit as st
+from frontend.utils.errores import mostrar_error
 
 API_URL = "http://localhost:8000"
 
@@ -10,7 +10,7 @@ def api_get(endpoint, params=None):
         response.raise_for_status()
         return response.json()
     except Exception as e:
-        st.error(f"Error al consultar la API: {e}")
+        mostrar_error(e)
         return None
 
 def api_post(endpoint, data=None):
@@ -19,5 +19,5 @@ def api_post(endpoint, data=None):
         resp.raise_for_status()
         return resp.json()
     except Exception as e:
-        st.error(f"Error al enviar datos a {endpoint}: {e}")
+        mostrar_error(e)
         return None

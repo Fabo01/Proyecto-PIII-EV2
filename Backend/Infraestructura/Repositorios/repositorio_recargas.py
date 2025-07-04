@@ -3,9 +3,9 @@ RepositorioRecargas: Acceso centralizado y unico a instancias de Recarga.
 Utiliza HashMap para acceso O(1) y garantiza instanciacion unica.
 """
 from Backend.Infraestructura.TDA.TDA_Hash_map import HashMap
-from Backend.Dominio.Interfaces.IntRepos.IRepositorioRecargas import IRepositorioRecargas
+from Backend.Dominio.Interfaces.IntRepos.IRepositorio import IRepositorio
 
-class RepositorioRecargas(IRepositorioRecargas):
+class RepositorioRecargas(IRepositorio):
     """
     Repositorio para gestionar instancias unicas de Recarga.
     Garantiza unicidad y acceso O(1) mediante HashMap.
@@ -33,11 +33,28 @@ class RepositorioRecargas(IRepositorioRecargas):
 
     def agregar(self, recarga):
         """
-        Agrega una nueva instancia de Recarga al repositorio.
+        Agrega una nueva instancia de Recarga al repositorio asegurando unicidad.
+        Si la recarga ya existe, retorna la instancia existente.
+        Si es nueva, la agrega.
         :param recarga: Instancia de Recarga a agregar.
         """
+        existente = self._recargas.buscar(recarga.id_recarga)
+        if existente:
+            self.notificar_observadores('repositorio_recargas_agregado_duplicado', {'recarga': existente})
+            return existente
         self._recargas.insertar(recarga.id_recarga, recarga)
         self.notificar_observadores('repositorio_recargas_agregado', {'recarga': recarga})
+        return recarga
+
+    def asociar_observador_a_recarga(self, id_recarga, observador):
+        """
+        Asocia un observador real a una recarga existente en el repositorio.
+        Si la recarga no existe, no hace nada.
+        """
+        recarga = self._recargas.buscar(id_recarga)
+        if recarga is not None:
+            recarga.agregar_observador(observador)
+            self.notificar_observadores('repositorio_recargas_observador_asociado', {'id_recarga': id_recarga})
 
     def obtener(self, id_recarga):
         """
@@ -80,3 +97,17 @@ class RepositorioRecargas(IRepositorioRecargas):
         """
         self.notificar_observadores('repositorio_recargas_hashmap', None)
         return dict(self._recargas.items())
+
+    def obtener_hashmap_serializable(self):
+        """
+        Retorna el hashmap de recargas serializado como dict plano usando MapeadorRecarga.
+        """
+        try:
+            from Backend.API.Mapeadores.MapeadorRecarga import MapeadorRecarga
+            resultado = {}
+            for id_r, recarga in self._recargas.items():
+                resultado[str(id_r)] = MapeadorRecarga.a_hashmap(recarga)
+            self.notificar_observadores('repositorio_recargas_hashmap_serializable', {'total': len(resultado)})
+            return resultado
+        except Exception:
+            return {}

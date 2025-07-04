@@ -29,8 +29,14 @@ class Recarga:
             obs.actualizar(evento, self, datos)
 
     def serializar(self):
-        self.notificar_observadores('recarga_serializada', None)
-        return {'id_recarga': self.id_recarga, 'nombre': self.nombre}
+        """
+        Serializa la recarga como dict plano.
+        """
+        return {
+            'id': self.id_recarga,
+            'tipo': self.tipo_elemento,
+            'nombre': self.nombre
+        }
 
     def __str__(self):
         return f"Recarga {self.id_recarga}: {self.nombre}"

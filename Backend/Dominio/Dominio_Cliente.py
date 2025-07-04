@@ -76,11 +76,14 @@ class Cliente:
 
     def serializar(self):
         """
-        Prepara los datos del cliente para su almacenamiento o transmisión.
-        Notifica a los observadores que el cliente ha sido serializado.
+        Serializa el cliente como dict plano, incluyendo solo los IDs de pedidos asociados.
         """
-        self.notificar_observadores('cliente_serializado', None)
-        return {'id_cliente': self.id_cliente, 'nombre': self.nombre, 'total_pedidos': self.total_pedidos()}
+        return {
+            'id': self.id_cliente,
+            'tipo': self.tipo_elemento,
+            'nombre': self.nombre,
+            'ids_pedidos': [getattr(p, 'id_pedido', None) for p in self._pedidos if hasattr(p, 'id_pedido')]
+        }
 
     def __str__(self):
         return f"Cliente {self.id_cliente}: {self.nombre} (Pedidos: {self.total_pedidos()})"

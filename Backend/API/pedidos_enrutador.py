@@ -6,6 +6,7 @@ from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
 from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
 from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 from typing import List
+import logging
 
 router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 
@@ -20,28 +21,39 @@ def listar_pedidos(service=Depends(get_simulacion_service)):
     pedidos = service.obtener_pedidos()
     if pedidos is None:
         raise HTTPException(status_code=404, detail="No hay pedidos registrados")
-    return [MapeadorPedido.a_dto(p) for p in pedidos]
+    return MapeadorPedido.lista_a_dto(pedidos)
 
-@router.get("/hashmap", response_model=RespuestaHashMap)
+@router.get("/hashmap", response_model=dict)
 def pedidos_hashmap(service=Depends(get_simulacion_service)):
     """
-    Devuelve el hashmap de pedidos (ID → Objeto Pedido serializable).
+    Devuelve el hashmap de pedidos (objetos reales para debug).
     """
-    hashmap = service.obtener_pedidos_hashmap()
-    if hashmap is None:
-        raise HTTPException(status_code=404, detail="No hay pedidos en el sistema")
-    hashmap_dto = {str(k): MapeadorPedido.a_dto(v).model_dump() for k, v in hashmap.items()}
-    return RespuestaHashMap(hashmap=hashmap_dto)
+    try:
+        from Backend.Infraestructura.Repositorios.repositorio_pedidos import RepositorioPedidos
+        repo = RepositorioPedidos()
+        return {"pedidos": repo.obtener_hashmap()}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error obteniendo hashmap de pedidos: {str(e)}")
 
 @router.get("/{id}", response_model=RespuestaPedido)
 def obtener_pedido(id: int, service=Depends(get_simulacion_service)):
     """
-    Devuelve un pedido por su id.
+    Devuelve un pedido por su id (DTO plano).
     """
-    pedido = service.buscar_pedido(id)
+    pedido = service.obtener_pedido(id)
     if pedido is None:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return MapeadorPedido.a_dto(pedido)
+
+@router.get("/hashmap/{id}", response_model=dict)
+def obtener_pedido_hashmap(id: int, service=Depends(get_simulacion_service)):
+    """
+    Devuelve un pedido por su id (objeto real para debug).
+    """
+    pedido = service.obtener_pedido(id)
+    if pedido is None:
+        raise HTTPException(status_code=404, detail="Pedido no encontrado")
+    return {"pedido": MapeadorPedido.a_hashmap(pedido)}
 
 @router.post("/crear", response_model=RespuestaPedido)
 def crear_pedido(dto: dict, service=Depends(get_simulacion_service)):
@@ -91,7 +103,7 @@ def pedidos_por_cliente(id_cliente: int, service=Depends(get_simulacion_service)
     """
     Devuelve los pedidos asociados a un cliente específico.
     """
-    pedidos = service.obtener_pedidos_por_cliente(id_cliente)
+    pedidos = service.obtener_por_cliente(id_cliente)
     if pedidos is None:
         raise HTTPException(status_code=404, detail="No hay pedidos para el cliente especificado")
     return [MapeadorPedido.a_dto(p) for p in pedidos]

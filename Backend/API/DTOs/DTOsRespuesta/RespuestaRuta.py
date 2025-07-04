@@ -1,21 +1,19 @@
-from typing import List, Optional
 from pydantic import BaseModel
-from .RespuestaVertice import RespuestaVertice
+from typing import List, Optional, Dict, Any
 
 class RespuestaRuta(BaseModel):
-    """
-    DTO de Ruta para respuesta API.
-    Origen y destino son vertices (Cliente, Almacenamiento o Recarga).
-    Camino es una lista de vertices.
-    """
-    origen: RespuestaVertice
-    destino: RespuestaVertice
-    camino: List[RespuestaVertice]
-    peso_total: float
-    algoritmo: str
-    tiempo_calculo: Optional[float] = None
+    id_ruta: str
+    id_pedido: Optional[int] = None
+    origen: Optional[Dict[str, Any]] = None  # {"id": int, "nombre": str, "tipo": str}
+    destino: Optional[Dict[str, Any]] = None  # {"id": int, "nombre": str, "tipo": str}
+    aristas_ids: List[str] = []  # IDs de aristas recorridas (formato "ori-dest")
+    camino: List[int] = []  # Secuencia de IDs de vértices en el camino
+    peso_total: Optional[float] = None
+    algoritmo: Optional[str] = None
+    tiempo_calculo: float = 0.0
+    fecha_creacion: str = ""
 
-    def __init__(self, **data):
-        super().__init__(**data)
-        if hasattr(self, 'notificar_observadores'):
-            self.notificar_observadores('dto_ruta_serializado', {'origen': self.origen, 'destino': self.destino, 'camino': self.camino, 'peso_total': self.peso_total, 'algoritmo': self.algoritmo, 'tiempo_calculo': self.tiempo_calculo})
+class RespuestaMultiplesRutas(BaseModel):
+    id_pedido: int
+    resultados: Dict[str, RespuestaRuta]  # {algoritmo: RespuestaRuta}
+    tiempo_total: float

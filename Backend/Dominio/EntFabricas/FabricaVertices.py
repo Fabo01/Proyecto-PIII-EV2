@@ -26,7 +26,14 @@ class FabricaVertices(FabricaInterfaz):
         """
         Crea un vértice para el elemento dado y lo registra en el repositorio si no existe.
         """
-        id_elemento = getattr(elemento, 'id_cliente', None) or getattr(elemento, 'id_almacenamiento', None) or getattr(elemento, 'id_recarga', None)
+        # Obtener identificador sin descartar valores 0
+        id_cliente = getattr(elemento, 'id_cliente', None)
+        id_almacenamiento = getattr(elemento, 'id_almacenamiento', None)
+        id_recarga = getattr(elemento, 'id_recarga', None)
+        id_elemento = id_cliente if id_cliente is not None else id_almacenamiento if id_almacenamiento is not None else id_recarga
+        if id_elemento is None:
+            self.logger.warning(f"Intento de crear vértice con ID None para elemento: {elemento}. Creación abortada.")
+            return None
         repo = RepositorioVertices()
         existente = repo.obtener(id_elemento)
         if existente:

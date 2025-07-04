@@ -37,24 +37,18 @@ class Arista:
     @property
     def peso(self):
         """
-        Retorna el peso (costo) asociado a la arista.
+        Retorna el peso de la arista.
         """
         return self._peso
 
     def set_extremos(self, nuevo_origen, nuevo_destino):
-        """
-        Actualiza los vértices de origen y destino de la arista.
-        """
         self._origen = nuevo_origen
         self._destino = nuevo_destino
-        self.notificar_observadores('arista_extremos_actualizados', {'origen': nuevo_origen, 'destino': nuevo_destino})
+        self.notificar_observadores('arista_actualizada', {'origen': nuevo_origen, 'destino': nuevo_destino})
 
     def set_peso(self, nuevo_peso):
-        """
-        Actualiza el peso de la arista.
-        """
         self._peso = nuevo_peso
-        self.notificar_observadores('arista_peso_actualizado', {'peso': nuevo_peso})
+        self.notificar_observadores('peso_actualizado', {'peso': nuevo_peso})
 
     def agregar_observador(self, observador):
         self._observadores.add(observador)
@@ -63,48 +57,39 @@ class Arista:
         self._observadores.discard(observador)
 
     def notificar_observadores(self, evento, datos=None):
-        for obs in self._observadores:
-            obs.actualizar(evento, self, datos)
+        for observador in self._observadores:
+            observador.actualizar(evento, self, datos)
 
     def serializar(self):
         """
-        Serializa la arista notificando a los observadores.
+        Serializa la arista usando los IDs reales de los elementos de los vértices de origen y destino.
+        Devuelve un diccionario plano con 'origen', 'destino' y 'peso'.
         """
-        self.notificar_observadores('arista_serializada', {'origen': self._origen, 'destino': self._destino, 'peso': self._peso})
-        return {'origen': str(self._origen), 'destino': str(self._destino), 'peso': self._peso}
-
-    def extremos(self):
-        """
-        Retorna una tupla (origen, destino) de los vértices conectados.
-        """
-        return (self._origen, self._destino)
-
-    def opuesto(self, vertice):
-        """
-        Retorna el vértice opuesto al dado en esta arista.
-        """
-        if vertice == self._origen:
-            return self._destino
-        elif vertice == self._destino:
-            return self._origen
-        else:
-            raise ValueError('El vertice no es extremo de esta arista')
-
-    def es_conexion(self, tipo_origen, tipo_destino):
-        """
-        Retorna True si la arista conecta los tipos de vértices dados.
-        """
-        return self._origen.es_tipo(tipo_origen) and self._destino.es_tipo(tipo_destino)
+        def obtener_id_elemento(vertice):
+            elemento = getattr(vertice, 'elemento', None)
+            if elemento is None:
+                return None
+            if hasattr(elemento, 'id_cliente'):
+                return elemento.id_cliente
+            elif hasattr(elemento, 'id_almacenamiento'):
+                return elemento.id_almacenamiento
+            elif hasattr(elemento, 'id_recarga'):
+                return elemento.id_recarga
+            else:
+                return None
+        return {
+            'origen': obtener_id_elemento(self._origen),
+            'destino': obtener_id_elemento(self._destino),
+            'peso': self._peso
+        }
 
     def __hash__(self):
-        # Incluir peso en hash para consistencia con __eq__
         return hash((self._origen, self._destino, self._peso))
 
     def __eq__(self, other):
-        """
-        Dos aristas son iguales si conectan los mismos vértices en el mismo orden y tienen el mismo peso.
-        """
-        return isinstance(other, Arista) and self._origen == other._origen and self._destino == other._destino and self._peso == other._peso
+        if not isinstance(other, Arista):
+            return False
+        return (self._origen == other._origen and self._destino == other._destino and self._peso == other._peso)
 
     def __str__(self):
         return f"Arista({self._origen} -> {self._destino}, peso={self._peso})"

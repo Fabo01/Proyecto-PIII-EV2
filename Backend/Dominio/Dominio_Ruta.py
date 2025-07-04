@@ -8,20 +8,24 @@ class Ruta:
     Representa una ruta entre dos vertices (vértices), incluyendo el camino (lista de vértices), el costo total y el tiempo de cálculo.
     Permite agregar observadores para auditar eventos de negocio.
     """
-    def __init__(self, origen, destino, camino, peso_total, algoritmo, tiempo_calculo=None):
+    def __init__(self, id_ruta, id_pedido, origen, destino, camino, peso_total, algoritmo, tiempo_calculo=None):
         """
-        Inicializa una ruta con origen, destino, camino, peso total, algoritmo y tiempo de calculo.
+        Inicializa una ruta con identificador, pedido, origen, destino, camino de aristas, costo total, algoritmo y tiempo de calculo.
         Notifica a los observadores la creación de la ruta.
         """
+        import datetime
+        self.id_ruta = id_ruta
+        self.id_pedido = id_pedido
         self.origen = origen  # Vértice de origen (objeto completo)
         self.destino = destino  # Vértice de destino (objeto completo)
-        self.camino = camino  # Lista de vértices (objetos completos)
+        self.camino = camino  # Lista de aristas recorridas (objetos completos)
         self.peso_total = peso_total
         self.algoritmo = algoritmo  # 'kruskal', 'dijkstra', 'bfs', 'dfs', etc.
         self.tiempo_calculo = tiempo_calculo  # Tiempo en segundos
+        self.fecha_creacion = datetime.datetime.now()  # Timestamp de creación
         self._observadores = set()
         # Notificar a los observadores la creación de la ruta
-        self.notificar_observadores('ruta_creada', {'origen': origen, 'destino': destino, 'camino': camino, 'peso_total': peso_total, 'algoritmo': algoritmo, 'tiempo_calculo': tiempo_calculo})
+        self.notificar_observadores('ruta_creada', {'origen': origen, 'destino': destino, 'camino': camino, 'peso_total': peso_total, 'algoritmo': algoritmo, 'tiempo_calculo': tiempo_calculo, 'fecha_creacion': self.fecha_creacion})
 
     def agregar_observador(self, observador):
         """
@@ -57,11 +61,15 @@ class Ruta:
 
     def serializar(self):
         """
-        Serializa la ruta en un diccionario.
-        Notifica a los observadores que la ruta ha sido serializada.
+        Serializa la ruta en un diccionario plano.
         """
-        self.notificar_observadores('ruta_serializada', None)
-        return {'origen': str(self.origen), 'destino': str(self.destino), 'camino': [str(v) for v in self.camino], 'peso_total': self.peso_total, 'algoritmo': self.algoritmo}
+        return {
+            'origen': getattr(self.origen, 'elemento', str(self.origen)),
+            'destino': getattr(self.destino, 'elemento', str(self.destino)),
+            'camino': [getattr(v, 'elemento', str(v)) for v in self.camino],
+            'peso_total': self.peso_total,
+            'algoritmo': self.algoritmo
+        }
 
     def __str__(self):
         return f"Ruta {self.origen} -> {self.destino} (Peso: {self.peso_total}, Algoritmo: {self.algoritmo})"

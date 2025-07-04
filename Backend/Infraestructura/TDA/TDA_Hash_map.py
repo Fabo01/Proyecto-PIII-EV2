@@ -1,5 +1,5 @@
 """
-Clase HashMap para acceso rápido a clientes y órdenes.
+Clase HashMap para acceso rápido a clientes y Pedidos.
 Basado en Docs/TDA-Map.py
 """
 
