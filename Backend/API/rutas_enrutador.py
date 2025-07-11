@@ -1,14 +1,22 @@
-from fastapi import APIRouter, HTTPException, Depends, Response
+from fastapi import APIRouter, HTTPException, Depends, Response, Path, Query, Body
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta, RespuestaMultiplesRutas
 from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from Backend.API.DTOs.DTOsRespuesta.RespuestaFloydWarshall import RespuestaFloydWarshall
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
 
 import logging
 
-router = APIRouter(prefix="/rutas", tags=["Rutas"])
+router = APIRouter(
+    prefix="/rutas", 
+    tags=["Rutas"],
+    responses={
+        404: {"description": "Recurso no encontrado"},
+        400: {"description": "Solicitud inválida"},
+        500: {"description": "Error interno del servidor"}
+    }
+)
 
 def get_simulacion_service():
     return SimulacionAplicacionService()
@@ -157,8 +165,40 @@ def rutas_por_pedido(id_pedido: int, service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=500, detail=f"Error de mapeo: {str(e)}")
 
 # Calcular ruta individual con algoritmo específico
-@router.post("/calcular/{id_pedido}/{algoritmo}", response_model=RespuestaRuta)
-def calcular_ruta(id_pedido: int, algoritmo: str, service=Depends(get_simulacion_service)):
+@router.post(
+    "/calcular/{id_pedido}/{algoritmo}", 
+    response_model=RespuestaRuta,
+    summary="Calcular Ruta Individual",
+    description="""
+    **Calcula la ruta óptima para un pedido específico usando un algoritmo determinado**
+    
+    ### Algoritmos disponibles:
+    - **bfs**: Búsqueda en Amplitud - Encuentra camino más corto en términos de número de saltos
+    - **dfs**: Búsqueda en Profundidad - Explora caminos en profundidad
+    - **dijkstra**: Camino más corto ponderado - Considera pesos de aristas
+    - **floydwarshall**: Todos los caminos más cortos - Algoritmo global optimizado
+    - **topologicalsort**: Ordenamiento topológico - Para grafos dirigidos acíclicos
+    
+    ### Validaciones:
+    - El pedido debe existir y no estar marcado como entregado
+    - Verifica autonomía del drone (máximo 50 unidades)
+    - Si la ruta excede la autonomía, busca estaciones de recarga
+    
+    ### Respuesta:
+    Ruta calculada con camino, peso total, tiempo de cálculo y estadísticas
+    """,
+    responses={
+        200: {"description": "Ruta calculada exitosamente"},
+        400: {"description": "Pedido ya entregado o parámetros inválidos"},
+        404: {"description": "Pedido no encontrado"},
+        422: {"description": "No se pudo calcular ruta válida"}
+    }
+)
+def calcular_ruta(
+    id_pedido: int = Path(..., description="ID único del pedido", example=1),
+    algoritmo: str = Path(..., description="Algoritmo de ruteo a utilizar", example="dijkstra"),
+    service=Depends(get_simulacion_service)
+) -> RespuestaRuta:
     """
     Calcula la ruta para un pedido con un algoritmo específico.
     """
@@ -205,8 +245,41 @@ def floydwarshall_pedidos(service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=500, detail=str(e))
 
 # Marcar pedido como entregado
-@router.post("/entregar/{id_pedido}", response_model=None)
-def entregar_pedido(id_pedido: int, service=Depends(get_simulacion_service)):
+@router.post(
+    "/entregar/{id_pedido}", 
+    response_model=Dict[str, Any],
+    summary="Marcar Pedido como Entregado",
+    description="""
+    **Marca un pedido como completado/entregado exitosamente**
+    
+    Este endpoint actualiza el estado del pedido a 'entregado' y registra
+    la fecha y hora de entrega. Una vez marcado como entregado:
+    
+    ### Efectos:
+    - ✅ El pedido queda marcado como 'entregado'
+    - ✅ Se registra timestamp de entrega
+    - ❌ **No se pueden calcular más rutas** para este pedido
+    - ✅ Se actualiza en todas las estadísticas del sistema
+    - ✅ Queda registrado en el historial de entregas
+    
+    ### Validaciones:
+    - El pedido debe existir en el sistema
+    - El pedido no debe estar ya marcado como entregado
+    - Debe tener una ruta asignada previamente
+    
+    ### Uso típico:
+    Se llama después de que el drone ha completado exitosamente la entrega del pedido al cliente.
+    """,
+    responses={
+        200: {"description": "Pedido marcado como entregado exitosamente"},
+        400: {"description": "Pedido ya entregado o sin ruta asignada"},
+        404: {"description": "Pedido no encontrado"}
+    }
+)
+def entregar_pedido(
+    id_pedido: int = Path(..., description="ID único del pedido a marcar como entregado", example=1),
+    service=Depends(get_simulacion_service)
+) -> Dict[str, Any]:
     """
     Marca el pedido como entregado.
     """

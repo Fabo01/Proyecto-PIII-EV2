@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Body, Query
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
 from Backend.API.DTOs.DTOsRespuesta.RespuestaSimulacionInit import RespuestaSimulacionInit
 from Backend.API.DTOs.DTOsRespuesta.RespuestaSimulacionEstado import RespuestaSimulacionEstado
@@ -13,6 +13,7 @@ from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
 from Backend.API.Mapeadores.MapeadorVertice import MapeadorVertice
 from Backend.API.Mapeadores.MapeadorArista import MapeadorArista
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
+from typing import Dict, Any
 import time
 import logging
 
@@ -40,8 +41,49 @@ def get_simulacion_service():
     """
     return SimulacionAplicacionService()
 
-@router.post("/iniciar", response_model=RespuestaSimulacionEstado)
-def iniciar_simulacion(request: RespuestaSimulacionInit, service=Depends(get_simulacion_service)):
+@router.post(
+    "/iniciar", 
+    response_model=RespuestaSimulacionEstado,
+    summary="Inicializar Nueva Simulación",
+    description="""
+    **Crea e inicializa una nueva simulación logística de drones**
+    
+    Este endpoint genera una red completa con vértices, aristas y pedidos aleatorios
+    según los parámetros especificados.
+    
+    ### Parámetros:
+    - **n_vertices**: Número total de vértices (10-150)
+        - 60% serán clientes 
+        - 20% serán almacenamientos
+        - 20% serán estaciones de recarga
+    - **m_aristas**: Número de aristas/conexiones (mín: n_vertices-1 para conectividad)
+    - **n_pedidos**: Número de pedidos a generar (10-500)
+    
+    ### Validaciones:
+    - El grafo generado será siempre conexo
+    - Las aristas tendrán pesos aleatorios (1-15 unidades)
+    - Los pedidos se asignan aleatoriamente entre almacenamientos y clientes
+    
+    ### Respuesta:
+    Estado completo de la simulación con todas las entidades creadas
+    """,
+    responses={
+        200: {"description": "Simulación inicializada exitosamente"},
+        400: {"description": "Parámetros inválidos"},
+        500: {"description": "Error interno del servidor"}
+    }
+)
+def iniciar_simulacion(
+    request: RespuestaSimulacionInit = Body(
+        ...,
+        example={
+            "n_vertices": 15,
+            "m_aristas": 20, 
+            "n_pedidos": 10
+        }
+    ),
+    service=Depends(get_simulacion_service)
+) -> RespuestaSimulacionEstado:
     """
     Inicia una nueva simulación con los parámetros dados y la registra como activa.
     """

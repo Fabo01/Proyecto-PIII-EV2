@@ -418,6 +418,53 @@ class Simulacion(SujetoObservable):
         self.notificar_observadores("entrega_pedido", {"pedido": id_pedido})
         return pedido
 
+    def actualizar_estado_pedido(self, id_pedido: int, nuevo_estado: str):
+        """
+        Actualiza el estado de un pedido específico.
+        Estados válidos: 'pendiente', 'enviado', 'entregado'
+        """
+        import logging
+        logger = logging.getLogger("Simulacion")
+        
+        # Obtener el pedido del repositorio
+        pedido = self._repo_pedidos.obtener(id_pedido)
+        if pedido is None:
+            logger.error(f"Pedido {id_pedido} no encontrado")
+            raise ValueError(f"Pedido {id_pedido} no encontrado")
+        
+        # Validar que el estado sea válido
+        estados_validos = ['pendiente', 'enviado', 'entregado']
+        if nuevo_estado not in estados_validos:
+            logger.error(f"Estado '{nuevo_estado}' no válido. Estados válidos: {estados_validos}")
+            raise ValueError(f"Estado '{nuevo_estado}' no válido. Estados válidos: {estados_validos}")
+        
+        # Validar transiciones de estado
+        estado_actual = pedido.status
+        if estado_actual == 'entregado' and nuevo_estado != 'entregado':
+            logger.error(f"No se puede cambiar el estado de un pedido ya entregado")
+            raise ValueError("No se puede cambiar el estado de un pedido ya entregado")
+        
+        # Actualizar el estado del pedido
+        if nuevo_estado == 'entregado':
+            pedido.marcar_entregado()
+            logger.info(f"Pedido {id_pedido} marcado como entregado")
+        else:
+            pedido.status = nuevo_estado
+            logger.info(f"Pedido {id_pedido} actualizado a estado '{nuevo_estado}'")
+        
+        # Notificar observadores si los hay
+        if hasattr(pedido, 'notificar_observadores'):
+            pedido.notificar_observadores('estado_actualizado', {
+                'id_pedido': id_pedido,
+                'estado_anterior': estado_actual,
+                'estado_nuevo': nuevo_estado
+            })
+        
+        # Actualizar en el repositorio
+        self._repo_pedidos.agregar(pedido, id_pedido)
+        
+        return pedido
+
     def buscar_pedido(self, id_pedido: int):
         return self.repo_pedidos.obtener(id_pedido)
 

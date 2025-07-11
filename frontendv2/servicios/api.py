@@ -35,6 +35,15 @@ def entregar_pedido(id_pedido: int):
     resp.raise_for_status()
     return resp.json()
 
+def actualizar_estado_pedido(id_pedido: int, nuevo_estado: str):
+    """
+    Actualiza el estado de un pedido específico.
+    Estados válidos: 'pendiente', 'enviado', 'entregado'
+    """
+    resp = requests.patch(f"{API_URL}/pedidos/{id_pedido}/estado", json=nuevo_estado)
+    resp.raise_for_status()
+    return resp.json()
+
 def rutas_por_pedido(id_pedido: int):
     resp = requests.get(f"{API_URL}/rutas/por_pedido/{id_pedido}")
     resp.raise_for_status()

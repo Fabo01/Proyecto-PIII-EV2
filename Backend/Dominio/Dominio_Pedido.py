@@ -71,25 +71,71 @@ class Pedido:
         return d
 
     def asignar_ruta(self, ruta, peso_total):
+        if self.es_entregado():
+            raise ValueError(f"No se puede asignar ruta a pedido ya entregado: {self.id_pedido}")
+        
         self.ruta = ruta
         self.peso_total = peso_total
         Pedido.logger.info(f"[Pedido] Ruta asignada: id={self.id_pedido} | ruta={ruta} | peso_total={peso_total}")
-        self.status = 'enviado'
+        self.status = 'en_ruta'
         self.notificar_observadores('pedido_ruta_asignada', {'ruta': ruta, 'peso_total': peso_total})
 
     def marcar_entregado(self):
+        """Marca el pedido como entregado y registra la fecha de entrega."""
+        if self.es_entregado():
+            Pedido.logger.warning(f"[Pedido] Intento de marcar como entregado un pedido ya entregado: {self.id_pedido}")
+            return False
+            
+        estado_anterior = self.status
         self.status = 'entregado'
         self.fecha_entrega = datetime.now()
-        self.notificar_observadores('pedido_entregado', {'fecha_entrega': self.fecha_entrega})
+        
+        Pedido.logger.info(f"[Pedido] Marcado como entregado: id={self.id_pedido} | estado_anterior={estado_anterior} | fecha_entrega={self.fecha_entrega}")
+        self.notificar_observadores('pedido_entregado', {
+            'fecha_entrega': self.fecha_entrega,
+            'estado_anterior': estado_anterior
+        })
+        return True
+
+    def puede_calcular_ruta(self):
+        """Verifica si se puede calcular una ruta para este pedido."""
+        return not self.es_entregado()
 
     def es_pendiente(self):
         return self.status == 'pendiente'
 
-    def es_enviado(self):
-        return self.status == 'enviado'
+    def es_en_ruta(self):
+        return self.status == 'en_ruta'
 
     def es_entregado(self):
         return self.status == 'entregado'
+
+    def obtener_estados_validos(self):
+        """Retorna los estados válidos del pedido."""
+        return ['pendiente', 'en_ruta', 'entregado']
+
+    def actualizar_status(self, nuevo_status):
+        """Actualiza el status del pedido con validaciones."""
+        estados_validos = self.obtener_estados_validos()
+        
+        if nuevo_status not in estados_validos:
+            raise ValueError(f"Estado inválido: {nuevo_status}. Estados válidos: {estados_validos}")
+        
+        if self.es_entregado() and nuevo_status != 'entregado':
+            raise ValueError(f"No se puede cambiar el estado de un pedido entregado")
+        
+        estado_anterior = self.status
+        
+        if nuevo_status == 'entregado':
+            return self.marcar_entregado()
+        else:
+            self.status = nuevo_status
+            Pedido.logger.info(f"[Pedido] Estado actualizado: id={self.id_pedido} | de {estado_anterior} a {nuevo_status}")
+            self.notificar_observadores('pedido_status_actualizado', {
+                'estado_anterior': estado_anterior,
+                'estado_nuevo': nuevo_status
+            })
+            return True
 
     def validar_origen_destino(self, origen, destino):
         resultado = (self.origen is origen and self.destino is destino) or \

@@ -1,14 +1,22 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Path, Query, Body
 from Backend.Aplicacion.SimAplicacion.Aplicacion_Simulacion import SimulacionAplicacionService
 from Backend.API.DTOs.DTOsRespuesta.RespuestaPedido import RespuestaPedido
 from Backend.API.DTOs.DTOsRespuesta.RespuestaRuta import RespuestaRuta
 from Backend.API.DTOs.DTOsRespuesta.RespuestaHashMap import RespuestaHashMap
 from Backend.API.Mapeadores.MapeadorPedido import MapeadorPedido
 from Backend.API.Mapeadores.MapeadorRuta import MapeadorRuta
-from typing import List
+from typing import List, Dict, Any
 import logging
 
-router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
+router = APIRouter(
+    prefix="/pedidos", 
+    tags=["Pedidos"],
+    responses={
+        404: {"description": "Pedido no encontrado"},
+        400: {"description": "Solicitud inválida"},
+        500: {"description": "Error interno del servidor"}
+    }
+)
 
 def get_simulacion_service():
     return SimulacionAplicacionService()
@@ -76,8 +84,47 @@ def calcular_ruta_pedido(id: int, service=Depends(get_simulacion_service)):
         raise HTTPException(status_code=404, detail="No se pudo calcular la ruta para el pedido")
     return MapeadorRuta.a_dto(ruta)
 
-@router.patch("/{id}/estado", response_model=RespuestaPedido)
-def actualizar_estado_pedido(id: int, nuevo_estado: str, service=Depends(get_simulacion_service)):
+@router.patch(
+    "/{id}/estado", 
+    response_model=RespuestaPedido,
+    summary="Actualizar Estado de Pedido",
+    description="""
+    **Actualiza el estado de un pedido específico**
+    
+    ### Estados válidos:
+    - **pendiente**: Recién creado, esperando asignación de ruta
+    - **enviado**: Ruta calculada y asignada, drone en camino
+    - **entregado**: Pedido completado exitosamente
+    
+    ### Flujo típico de estados:
+    ```
+    pendiente → enviado → entregado
+    ```
+    
+    ### Validaciones:
+    - El pedido debe existir en el sistema
+    - El nuevo estado debe ser válido
+    - No se puede cambiar el estado de un pedido ya entregado
+    - Cambiar a 'entregado' registra timestamp automáticamente
+    
+    ### Efectos por estado:
+    - **pendiente → enviado**: Permite cálculo de rutas
+    - **enviado → entregado**: Bloquea nuevos cálculos de rutas, registra entrega
+    
+    ### Uso desde frontend:
+    Este endpoint se usa desde la pestaña "Clientes y Pedidos" para marcar pedidos como completados.
+    """,
+    responses={
+        200: {"description": "Estado actualizado exitosamente"},
+        400: {"description": "Estado inválido o transición no permitida"},
+        404: {"description": "Pedido no encontrado"}
+    }
+)
+def actualizar_estado_pedido(
+    id: int = Path(..., description="ID único del pedido", example=1),
+    nuevo_estado: str = Body(..., description="Nuevo estado del pedido", example="entregado"),
+    service=Depends(get_simulacion_service)
+) -> RespuestaPedido:
     """
     Actualiza el estado de un pedido (pendiente, en_ruta, entregado, etc).
     """

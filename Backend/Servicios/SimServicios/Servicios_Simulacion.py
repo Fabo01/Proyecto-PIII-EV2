@@ -282,6 +282,12 @@ class SimulacionDominioService(ISimulacionDominioService):
         """
         return self._sim.entregar_pedido(id_pedido)
 
+    def actualizar_estado_pedido(self, id_pedido: int, nuevo_estado: str):
+        """
+        Actualiza el estado de un pedido. Estados válidos: 'pendiente', 'enviado', 'entregado'
+        """
+        return self._sim.actualizar_estado_pedido(id_pedido, nuevo_estado)
+
     def calcular_mst_kruskal(self):
         """
         Calcula el Árbol de Expansión Mínima (MST) usando el algoritmo de Kruskal.

@@ -215,6 +215,10 @@ class SimulacionAplicacionService(ISimulacionAplicacionService):
         """Marca un pedido como entregado"""
         return self._serv.entregar_pedido(id_pedido)
 
+    def actualizar_estado_pedido(self, id_pedido: int, nuevo_estado: str):
+        """Actualiza el estado de un pedido"""
+        return self._serv.actualizar_estado_pedido(id_pedido, nuevo_estado)
+
     def calcular_mst_kruskal(self):
         """Calcula el Árbol de Expansión Mínima usando Kruskal"""
         return self._serv.calcular_mst_kruskal()

@@ -90,11 +90,19 @@ class FabricaRutas(FabricaInterfaz):
         Calcula y crea una ruta para un pedido usando un algoritmo específico.
         Si ya existe una ruta con el mismo origen, destino y algoritmo, la retorna.
         Siempre trabaja con el objeto real de memoria y actualiza el repositorio para unicidad.
+        Valida que el pedido no esté entregado antes de calcular.
         """
         from Backend.Infraestructura.Repositorios.repositorio_rutas import RepositorioRutas
         import time
         import logging
         logger = logging.getLogger("FabricaRutas")
+        
+        # Validar que el pedido no esté entregado
+        if hasattr(pedido, 'es_entregado') and pedido.es_entregado():
+            logger.warning(f"[FabricaRutas] Intento de calcular ruta para pedido entregado: {getattr(pedido, 'id_pedido', None)}")
+            self.errores.append(f"No se puede calcular ruta para pedido entregado: {getattr(pedido, 'id_pedido', None)}")
+            return None
+            
         # Generar clave única de ruta como string para consistencia
         ori_id = getattr(pedido.origen.elemento, 'id_cliente', None) or getattr(pedido.origen.elemento, 'id_almacenamiento', None) or getattr(pedido.origen.elemento, 'id_recarga', None)
         dst_id = getattr(pedido.destino.elemento, 'id_cliente', None) or getattr(pedido.destino.elemento, 'id_almacenamiento', None) or getattr(pedido.destino.elemento, 'id_recarga', None)
